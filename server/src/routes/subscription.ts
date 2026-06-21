@@ -1,13 +1,20 @@
 import { Router, Request, Response } from 'express'
-import Stripe from 'stripe'
 
 const router = Router()
 
-function getStripe() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getStripe(): any {
   if (!process.env.STRIPE_SECRET_KEY) return null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' as any })
+  // Dynamic require avoids compile-time Stripe type issues
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Stripe = require('stripe')
+  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' })
 }
+
+// Health check — confirms route module is loaded
+router.get('/ping', (_req: Request, res: Response) => {
+  res.json({ ok: true, stripe_key_set: !!process.env.STRIPE_SECRET_KEY, price_id_set: !!process.env.STRIPE_PRICE_ID })
+})
 
 // POST /api/subscription/create-checkout
 // Creates a Stripe Checkout Session and returns the URL
