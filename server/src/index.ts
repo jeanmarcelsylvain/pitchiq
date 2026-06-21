@@ -23,7 +23,14 @@ app.use(compression())
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
+  origin: (origin, callback) => {
+    const allowed = ['http://localhost:5173', process.env.CLIENT_ORIGIN].filter(Boolean)
+    if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true,
 }))
 
