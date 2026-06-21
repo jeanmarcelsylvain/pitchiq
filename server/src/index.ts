@@ -11,6 +11,7 @@ import goalRoutes from './routes/goals'
 import analyticsRoutes from './routes/analytics'
 import coachRoutes from './routes/coach'
 import injuryRoutes from './routes/injury'
+import trainingRoutes from './routes/training'
 
 dotenv.config()
 
@@ -54,6 +55,7 @@ app.use('/api/goals', goalRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/coach', coachRoutes)
 app.use('/api/injury', injuryRoutes)
+app.use('/api/training', trainingRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' })
