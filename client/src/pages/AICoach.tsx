@@ -1065,7 +1065,7 @@ export default function AICoach() {
       .map(a => a.id.replace(/_/g, ' '))
 
     try {
-      const res = await fetch('http://localhost:3001/api/coach/ask', {
+      const res = await fetch('https://pitchiq-production-facc.up.railway.app/api/coach/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: text, position, weakAreas, matchCount: matches.length, history }),
