@@ -63,7 +63,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div data-tour="stat-cards" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label="Season Goals"
           value={seasonStats.goals}
@@ -109,7 +109,7 @@ export default function Dashboard() {
       {/* Main grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Rating chart */}
-        <div className="lg:col-span-2">
+        <div data-tour="rating-chart" className="lg:col-span-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Performance Rating Trend</CardTitle>
@@ -133,7 +133,7 @@ export default function Dashboard() {
         </div>
 
         {/* Insights */}
-        <div>
+        <div data-tour="insights">
           <Card className="h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Insights</CardTitle>

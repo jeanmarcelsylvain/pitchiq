@@ -95,7 +95,7 @@ export default function Matches() {
           <h1 className="text-2xl font-bold text-white">Matches</h1>
           <p className="mt-1 text-sm text-slate-500">{matches.length} matches logged this season</p>
         </div>
-        <Button variant="primary" onClick={() => setShowForm(true)}>
+        <Button data-tour="log-match-btn" variant="primary" onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4" /> Log Match
         </Button>
       </div>

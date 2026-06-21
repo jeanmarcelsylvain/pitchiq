@@ -79,7 +79,7 @@ export default function Goals() {
           <h1 className="text-2xl font-bold text-white">Goals</h1>
           <p className="mt-1 text-sm text-slate-500">{active.length} active · {completed.length} completed</p>
         </div>
-        <Button variant="primary" onClick={() => setShowForm(true)}>
+        <Button data-tour="add-goal-btn" variant="primary" onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4" /> New Goal
         </Button>
       </div>

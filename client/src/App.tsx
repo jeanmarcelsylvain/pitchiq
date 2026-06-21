@@ -9,17 +9,26 @@ import Analytics from '@/pages/Analytics'
 import Goals from '@/pages/Goals'
 import Profile from '@/pages/Profile'
 import AICoach from '@/pages/AICoach'
+import TutorialOverlay, { TOUR_KEY } from '@/components/TutorialOverlay'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading, isDemoMode } = useAuth()
+  const [showTour, setShowTour] = useState(() => {
+    if (typeof window === 'undefined') return false
+    // Show tour for demo mode always on first visit, or new real users
+    const uid = isDemoMode ? 'demo' : user?.uid ?? ''
+    if (!uid) return false
+    return localStorage.getItem(TOUR_KEY(uid)) !== 'true'
+  })
 
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-pitch-500" />
-          <p className="text-sm text-slate-500">Loading PitchIQ…</p>
+          <p className="text-sm text-slate-500">Loading MyFutbolPro…</p>
         </div>
       </div>
     )
@@ -27,7 +36,16 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (!user && !isDemoMode) return <Navigate to="/" replace />
 
-  return <Layout>{children}</Layout>
+  const uid = isDemoMode ? 'demo' : user?.uid ?? ''
+
+  return (
+    <Layout>
+      {children}
+      {showTour && uid && (
+        <TutorialOverlay uid={uid} onComplete={() => setShowTour(false)} />
+      )}
+    </Layout>
+  )
 }
 
 function AppRoutes() {

@@ -164,7 +164,7 @@ export default function Analytics() {
         </Card>
 
         {/* Radar chart */}
-        <Card>
+        <Card data-tour="radar-chart">
           <CardHeader><CardTitle>Skill Radar</CardTitle></CardHeader>
           <CardContent className="pt-2 flex items-center justify-center">
             <ResponsiveContainer width="100%" height={220}>
