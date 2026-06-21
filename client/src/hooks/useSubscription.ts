@@ -39,7 +39,7 @@ export function useSubscription() {
   const uid = isDemoMode ? 'demo' : user?.uid ?? ''
 
   const [isPro, setIsPro] = useState<boolean>(() => {
-    if (isDemoMode) return true // demo users see everything
+    if (isDemoMode) return false // demo users must upgrade to access Pro features
     const cached = uid ? readCache(uid) : null
     return cached?.isPro ?? false
   })
@@ -50,7 +50,7 @@ export function useSubscription() {
   const [loading, setLoading] = useState(!isDemoMode && !!uid && !readCache(uid))
 
   useEffect(() => {
-    if (isDemoMode) { setIsPro(true); setLoading(false); return }
+    if (isDemoMode) { setIsPro(false); setLoading(false); return }
     if (!uid) { setLoading(false); return }
 
     const cached = readCache(uid)
@@ -78,8 +78,12 @@ export function useSubscription() {
   }, [uid, isDemoMode])
 
   const startCheckout = async () => {
+    if (isDemoMode) {
+      alert('Sign in with your Google account to subscribe to Pro.')
+      return
+    }
     if (!user?.email || !uid) {
-      alert('Please sign in with a Google account (not demo mode) to subscribe.')
+      alert('Please sign in with a Google account to subscribe.')
       return
     }
     try {
