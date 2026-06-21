@@ -10,7 +10,7 @@ const positions: Position[] = ['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LM',
 const steps = [
   {
     id: 'welcome',
-    title: 'Welcome to PitchIQ',
+    title: 'Welcome to MyFutbolPro',
     subtitle: 'Your personal soccer performance analytics platform',
   },
   {
@@ -82,12 +82,12 @@ export default function Onboarding() {
                 <Zap className="h-8 w-8 text-white" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-3">Welcome to PitchIQ</h1>
+            <h1 className="text-3xl font-bold text-white mb-3">Welcome to MyFutbolPro</h1>
             <p className="text-slate-400 mb-2 text-lg">
               Hey {user?.displayName?.split(' ')[0] ?? 'there'} 👋
             </p>
             <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
-              PitchIQ helps competitive soccer players track every match, analyze their performance, and improve with data-driven insights.
+              MyFutbolPro helps competitive soccer players track every match, analyze their performance, and improve with data-driven insights.
             </p>
             <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-left space-y-3">
               {[
@@ -131,7 +131,7 @@ export default function Onboarding() {
                   icon: Zap,
                   color: 'bg-purple-500/15 text-purple-400',
                   title: 'Performance Insights',
-                  desc: 'PitchIQ automatically spots patterns in your data — like which position you perform best in.',
+                  desc: 'MyFutbolPro automatically spots patterns in your data — like which position you perform best in.',
                 },
                 {
                   icon: Target,

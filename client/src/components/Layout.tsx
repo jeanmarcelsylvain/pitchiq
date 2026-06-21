@@ -51,7 +51,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <Zap className="h-4 w-4 text-white" />
           </div>
           <div>
-            <span className="text-base font-bold text-white tracking-tight">PitchIQ</span>
+            <span className="text-base font-bold text-white tracking-tight">MyFutbolPro</span>
             <p className="text-xs text-slate-500 leading-none mt-0.5">Performance Analytics</p>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="ml-auto text-slate-500 hover:text-white lg:hidden">

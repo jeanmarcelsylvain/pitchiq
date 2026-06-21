@@ -57,7 +57,7 @@ export default function Landing() {
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-pitch-600">
                   <Zap className="h-3.5 w-3.5 text-white" />
                 </div>
-                <span className="font-bold text-white">PitchIQ</span>
+                <span className="font-bold text-white">MyFutbolPro</span>
               </div>
               <button onClick={() => setShowSignInModal(false)} className="text-slate-500 hover:text-white transition-colors">
                 <X className="h-5 w-5" />
@@ -77,7 +77,7 @@ export default function Landing() {
             </button>
 
             <p className="text-center text-xs text-slate-600 mt-5">
-              New to PitchIQ?{' '}
+              New to MyFutbolPro?{' '}
               <button onClick={() => setShowSignInModal(false)} className="text-pitch-400 hover:text-pitch-300 underline">
                 Create an account
               </button>
@@ -92,7 +92,7 @@ export default function Landing() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pitch-600">
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold tracking-tight">PitchIQ</span>
+          <span className="text-lg font-bold tracking-tight">MyFutbolPro</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={handleDemo} className="hidden sm:flex">
@@ -125,7 +125,7 @@ export default function Landing() {
             <span className="text-pitch-400">Elevate Your Play.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400 leading-relaxed">
-            PitchIQ is the performance analytics platform for serious youth soccer players.
+            MyFutbolPro is the performance analytics platform for serious youth soccer players.
             Track every match, visualize your trends, and unlock data-driven insights that help you reach the next level.
           </p>
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -178,7 +178,7 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-14">
             <h2 className="text-3xl font-bold text-white lg:text-4xl">Everything a serious player needs</h2>
-            <p className="mt-4 text-slate-400 max-w-xl mx-auto">From match stats to season trends — PitchIQ gives you the same analytics infrastructure that pro clubs use.</p>
+            <p className="mt-4 text-slate-400 max-w-xl mx-auto">From match stats to season trends — MyFutbolPro gives you the same analytics infrastructure that pro clubs use.</p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map(({ icon: Icon, title, desc }) => (
@@ -198,7 +198,7 @@ export default function Landing() {
       <section className="px-6 py-20 lg:px-12">
         <div className="mx-auto max-w-3xl rounded-2xl border border-pitch-600/20 bg-pitch-600/5 p-12 text-center">
           <h2 className="text-3xl font-bold text-white">Ready to level up?</h2>
-          <p className="mt-4 text-slate-400">Join hundreds of competitive youth players tracking their development with PitchIQ.</p>
+          <p className="mt-4 text-slate-400">Join hundreds of competitive youth players tracking their development with MyFutbolPro.</p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={handleSignIn}
@@ -222,9 +222,9 @@ export default function Landing() {
       <footer className="border-t border-slate-800 px-6 py-8 text-center text-xs text-slate-600">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Zap className="h-3 w-3 text-pitch-600" />
-          <span className="font-semibold text-slate-500">PitchIQ</span>
+          <span className="font-semibold text-slate-500">MyFutbolPro</span>
         </div>
-        <p>© 2024 PitchIQ. Built for players who want more than just highlights.</p>
+        <p>© 2024 MyFutbolPro. Built for players who want more than just highlights.</p>
       </footer>
     </div>
   )
