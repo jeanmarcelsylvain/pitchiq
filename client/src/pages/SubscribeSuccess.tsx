@@ -8,14 +8,14 @@ const RAILWAY_URL = 'https://pitchiq-production-facc.up.railway.app'
 
 export default function SubscribeSuccess() {
   const [searchParams] = useSearchParams()
-  const { user, isDemoMode } = useAuth()
+  const { user, isDemoMode, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-
   const uid = isDemoMode ? 'demo' : user?.uid ?? ''
   const sessionId = searchParams.get('session_id')
 
   useEffect(() => {
+    if (authLoading) return
     if (!sessionId || !uid) { setStatus('error'); return }
 
     fetch(`${RAILWAY_URL}/api/subscription/verify?session_id=${sessionId}`)
@@ -30,7 +30,7 @@ export default function SubscribeSuccess() {
         }
       })
       .catch(() => setStatus('error'))
-  }, [sessionId, uid])
+  }, [sessionId, uid, authLoading])
 
   if (status === 'loading') return (
     <div className="flex h-screen items-center justify-center bg-slate-950">
