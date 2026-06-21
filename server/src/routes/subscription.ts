@@ -5,7 +5,8 @@ const router = Router()
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) return null
-  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-05-28.basil' })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' as any })
 }
 
 // POST /api/subscription/create-checkout
