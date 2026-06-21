@@ -26,7 +26,7 @@ const STEPS: TutorialStep[] = [
     page: '/analytics',
     emoji: '📊',
     title: 'Analytics',
-    description: 'Deep dive into your performance data. Charts show trends across your season so you can see exactly where you're improving and where to focus next.',
+    description: "Deep dive into your performance data. Charts show trends across your season so you can see exactly where you're improving and where to focus next.",
   },
   {
     page: '/goals',
