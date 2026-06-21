@@ -87,7 +87,9 @@ export default function Matches() {
         setForm(emptyForm)
         setShowForm(false)
         // Persist to DB in background
-        apiFetch('/api/matches', { method: 'POST', body: JSON.stringify(form) }).catch(() => {})
+        apiFetch('/api/matches', { method: 'POST', body: JSON.stringify(form) }).catch((err) => {
+          console.error('DB save failed:', err)
+        })
       } else {
         const newMatch: Match = {
           ...form, id: crypto.randomUUID(),

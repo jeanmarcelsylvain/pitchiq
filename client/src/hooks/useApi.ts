@@ -1,5 +1,5 @@
 import { useAuth } from './useAuth'
-import { getAuth } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
 const RAILWAY_URL = 'https://pitchiq-production-facc.up.railway.app'
 
@@ -9,7 +9,7 @@ export function useApi() {
   async function getToken(): Promise<string | null> {
     if (isDemoMode || !user) return null
     try {
-      return await getAuth().currentUser?.getIdToken() ?? null
+      return await auth.currentUser?.getIdToken() ?? null
     } catch {
       return null
     }
