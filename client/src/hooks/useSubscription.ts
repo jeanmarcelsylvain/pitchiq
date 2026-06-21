@@ -78,7 +78,10 @@ export function useSubscription() {
   }, [uid, isDemoMode])
 
   const startCheckout = async () => {
-    if (!user?.email || !uid) return
+    if (!user?.email || !uid) {
+      alert('Please sign in with a Google account (not demo mode) to subscribe.')
+      return
+    }
     try {
       const res = await fetch(`${RAILWAY_URL}/api/subscription/create-checkout`, {
         method: 'POST',
@@ -90,9 +93,13 @@ export function useSubscription() {
         }),
       })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
-    } catch {
-      alert('Could not start checkout. Please try again.')
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        alert(`Checkout error: ${data.error ?? 'No URL returned. Check Railway has STRIPE_SECRET_KEY and STRIPE_PRICE_ID set.'}`)
+      }
+    } catch (err) {
+      alert(`Could not reach server. Make sure Railway is deployed and running.\n\n${err}`)
     }
   }
 

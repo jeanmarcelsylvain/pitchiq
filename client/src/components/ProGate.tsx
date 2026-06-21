@@ -1,5 +1,6 @@
-import { Sparkles, Lock } from 'lucide-react'
+import { Sparkles, Lock, Loader } from 'lucide-react'
 import { useSubscription } from '@/hooks/useSubscription'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 
 interface ProGateProps {
@@ -9,6 +10,13 @@ interface ProGateProps {
 
 export default function ProGate({ children, feature = 'This feature' }: ProGateProps) {
   const { isPro, loading, startCheckout } = useSubscription()
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+
+  const handleUpgrade = async () => {
+    setCheckoutLoading(true)
+    await startCheckout()
+    setCheckoutLoading(false)
+  }
 
   if (loading) {
     return (
@@ -37,10 +45,12 @@ export default function ProGate({ children, feature = 'This feature' }: ProGateP
           <p className="text-sm text-slate-400 mb-6">
             {feature} is available on MyFutbolPro Pro. Upgrade to unlock AI coaching, training plans, injury assessment, and recruitment tools.
           </p>
-          <button onClick={startCheckout}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-green-900/30 mb-3">
-            <Sparkles className="h-4 w-4" />
-            Upgrade to Pro — $4.99/mo
+          <button onClick={handleUpgrade} disabled={checkoutLoading}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-70 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-green-900/30 mb-3">
+            {checkoutLoading
+              ? <><Loader className="h-4 w-4 animate-spin" /> Redirecting to checkout…</>
+              : <><Sparkles className="h-4 w-4" /> Upgrade to Pro — $4.99/mo</>
+            }
           </button>
           <p className="text-xs text-slate-600">Cancel anytime · Secure payment via Stripe</p>
         </div>
