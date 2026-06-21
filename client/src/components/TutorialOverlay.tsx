@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { X, ArrowRight, ChevronLeft } from 'lucide-react'
+import { ArrowRight, ChevronLeft } from 'lucide-react'
 
 interface TutorialStep {
   page: string
@@ -27,14 +27,14 @@ const STEPS: TutorialStep[] = [
   {
     page: '/dashboard',
     selector: '[data-tour="rating-chart"]',
-    position: 'top',
+    position: 'bottom',
     title: 'Performance Trend',
     description: 'This chart tracks your match rating over time. Look for upward trends to see when your form is peaking, and dips to identify when you need to refocus.',
   },
   {
     page: '/dashboard',
     selector: '[data-tour="insights"]',
-    position: 'top',
+    position: 'left',
     title: 'AI Insights',
     description: 'MyFutbolPro automatically analyzes your data and surfaces personalized insights — like when your passing accuracy drops in away games, or when your goal rate is improving.',
   },
@@ -42,7 +42,7 @@ const STEPS: TutorialStep[] = [
     page: '/matches',
     position: 'center',
     title: 'Match Logging',
-    description: "This is where you log every game you play. The more matches you log, the smarter your analytics get. Click 'Log Match' to add your first game.",
+    description: "This is where you log every game you play. The more matches you log, the smarter your analytics get. Every stat you enter powers your charts and AI coaching.",
   },
   {
     page: '/matches',
@@ -55,12 +55,12 @@ const STEPS: TutorialStep[] = [
     page: '/analytics',
     position: 'center',
     title: 'Analytics',
-    description: 'Deep dive into your performance data. Charts and graphs show trends across your entire season so you can see exactly where you are improving and where to focus next.',
+    description: 'Deep dive into your performance data. Charts show trends across your entire season so you can see exactly where you are improving and where to focus next.',
   },
   {
     page: '/analytics',
     selector: '[data-tour="radar-chart"]',
-    position: 'right',
+    position: 'top',
     title: 'Skills Radar',
     description: 'This radar chart shows your strengths and weaknesses across key attributes — finishing, passing, pace, defending, and more. The bigger the shape, the more well-rounded you are.',
   },
@@ -93,6 +93,8 @@ const STEPS: TutorialStep[] = [
 
 const TOUR_KEY = (uid: string) => `tour_completed_${uid}`
 
+interface Rect { top: number; left: number; width: number; height: number }
+
 interface Props {
   uid: string
   onComplete: () => void
@@ -100,102 +102,119 @@ interface Props {
 
 export default function TutorialOverlay({ uid, onComplete }: Props) {
   const [step, setStep] = useState(0)
-  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({})
-  const [spotlightStyle, setSpotlightStyle] = useState<React.CSSProperties>({})
   const [visible, setVisible] = useState(false)
+  const [highlightRect, setHighlightRect] = useState<Rect | null>(null)
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({})
+  const [prevEl, setPrevEl] = useState<Element | null>(null)
   const navigate = useNavigate()
   const location = useLocation()
-  const tooltipRef = useRef<HTMLDivElement>(null)
 
   const current = STEPS[step]
   const isLast = step === STEPS.length - 1
+  const PAD = 10
 
-  // Navigate to the right page when step changes
+  // Navigate when step requires a different page
   useEffect(() => {
     if (location.pathname !== current.page) {
       navigate(current.page)
     }
   }, [step])
 
-  // Position tooltip after navigation + small delay for render
+  // Reposition after page change
   useEffect(() => {
     setVisible(false)
+
+    // Restore previous element's z-index
+    if (prevEl) {
+      ;(prevEl as HTMLElement).style.position = ''
+      ;(prevEl as HTMLElement).style.zIndex = ''
+      setPrevEl(null)
+    }
+
     const timer = setTimeout(() => {
-      positionTooltip()
+      position()
       setVisible(true)
-    }, 400)
-    return () => clearTimeout(timer)
+    }, 450)
+
+    return () => {
+      clearTimeout(timer)
+    }
   }, [step, location.pathname])
 
-  const positionTooltip = () => {
+  const position = () => {
     if (!current.selector) {
-      // Center of screen
-      setSpotlightStyle({ display: 'none' })
+      setHighlightRect(null)
       setTooltipStyle({
         position: 'fixed',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 10001,
-        width: '340px',
+        width: 360,
+        zIndex: 10002,
       })
       return
     }
 
-    const el = document.querySelector(current.selector)
+    const el = document.querySelector(current.selector) as HTMLElement | null
     if (!el) {
-      setSpotlightStyle({ display: 'none' })
+      setHighlightRect(null)
       setTooltipStyle({
         position: 'fixed',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 10001,
-        width: '340px',
+        width: 360,
+        zIndex: 10002,
       })
       return
     }
+
+    // Lift element above overlay
+    el.style.position = 'relative'
+    el.style.zIndex = '10001'
+    setPrevEl(el)
 
     const rect = el.getBoundingClientRect()
-    const pad = 8
-
-    // Spotlight
-    setSpotlightStyle({
-      position: 'fixed',
-      top: rect.top - pad,
-      left: rect.left - pad,
-      width: rect.width + pad * 2,
-      height: rect.height + pad * 2,
-      borderRadius: 12,
-      boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
-      zIndex: 9999,
-      pointerEvents: 'none',
-      transition: 'all 0.3s ease',
+    setHighlightRect({
+      top: rect.top - PAD,
+      left: rect.left - PAD,
+      width: rect.width + PAD * 2,
+      height: rect.height + PAD * 2,
     })
 
-    // Tooltip position
+    // Position tooltip
+    const tipW = 340
     const pos = current.position ?? 'bottom'
-    const tipW = 320
-    let style: React.CSSProperties = { position: 'fixed', zIndex: 10001, width: tipW }
+    let style: React.CSSProperties = { position: 'fixed', width: tipW, zIndex: 10002 }
+
+    const centerX = Math.max(12, Math.min(rect.left + rect.width / 2 - tipW / 2, window.innerWidth - tipW - 12))
 
     if (pos === 'bottom') {
-      style.top = rect.bottom + 16
-      style.left = Math.max(12, Math.min(rect.left + rect.width / 2 - tipW / 2, window.innerWidth - tipW - 12))
+      style.top = rect.bottom + PAD + 12
+      style.left = centerX
     } else if (pos === 'top') {
-      style.bottom = window.innerHeight - rect.top + 16
-      style.left = Math.max(12, Math.min(rect.left + rect.width / 2 - tipW / 2, window.innerWidth - tipW - 12))
-    } else if (pos === 'right') {
-      style.top = rect.top + rect.height / 2 - 80
-      style.left = rect.right + 16
+      style.bottom = window.innerHeight - rect.top + PAD + 12
+      style.left = centerX
     } else if (pos === 'left') {
-      style.top = rect.top + rect.height / 2 - 80
-      style.right = window.innerWidth - rect.left + 16
+      style.top = Math.max(12, rect.top + rect.height / 2 - 100)
+      style.right = window.innerWidth - rect.left + PAD + 12
+    } else if (pos === 'right') {
+      style.top = Math.max(12, rect.top + rect.height / 2 - 100)
+      style.left = rect.right + PAD + 12
     }
 
     setTooltipStyle(style)
   }
 
+  const cleanup = () => {
+    if (prevEl) {
+      ;(prevEl as HTMLElement).style.position = ''
+      ;(prevEl as HTMLElement).style.zIndex = ''
+    }
+  }
+
   const handleNext = () => {
+    cleanup()
     if (isLast) {
       handleComplete()
     } else {
@@ -204,31 +223,57 @@ export default function TutorialOverlay({ uid, onComplete }: Props) {
   }
 
   const handleBack = () => {
+    cleanup()
     if (step > 0) setStep(s => s - 1)
   }
 
   const handleComplete = () => {
+    cleanup()
     localStorage.setItem(TOUR_KEY(uid), 'true')
     onComplete()
   }
 
   return (
     <>
-      {/* Dark overlay */}
+      {/* Full dark overlay */}
       <div
-        className="fixed inset-0 bg-black/75 z-[9998] transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
+        className="fixed inset-0 transition-opacity duration-300"
+        style={{
+          background: 'rgba(0,0,0,0.82)',
+          zIndex: 10000,
+          opacity: visible ? 1 : 0,
+          pointerEvents: visible ? 'auto' : 'none',
+        }}
       />
 
-      {/* Spotlight cutout */}
-      {current.selector && (
-        <div style={spotlightStyle} />
+      {/* Highlight ring around the element */}
+      {highlightRect && (
+        <div
+          style={{
+            position: 'fixed',
+            top: highlightRect.top,
+            left: highlightRect.left,
+            width: highlightRect.width,
+            height: highlightRect.height,
+            borderRadius: 14,
+            zIndex: 10001,
+            pointerEvents: 'none',
+            opacity: visible ? 1 : 0,
+            transition: 'all 0.35s ease, opacity 0.25s ease',
+            border: '2px solid #22c55e',
+            boxShadow: '0 0 0 4px rgba(34,197,94,0.15), 0 0 24px 4px rgba(34,197,94,0.25)',
+          }}
+        />
       )}
 
       {/* Tooltip card */}
       <div
-        ref={tooltipRef}
-        style={{ ...tooltipStyle, opacity: visible ? 1 : 0, transition: 'opacity 0.25s ease' }}
+        style={{
+          ...tooltipStyle,
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 0.25s ease',
+          pointerEvents: visible ? 'auto' : 'none',
+        }}
         className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5"
       >
         {/* Progress dots */}
@@ -236,18 +281,24 @@ export default function TutorialOverlay({ uid, onComplete }: Props) {
           {STEPS.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === step ? 'w-6 bg-pitch-500' : i < step ? 'w-1.5 bg-pitch-500/40' : 'w-1.5 bg-slate-700'
-              }`}
+              className="rounded-full transition-all duration-300"
+              style={{
+                height: 6,
+                width: i === step ? 24 : 6,
+                background: i <= step ? '#22c55e' : '#1e293b',
+              }}
             />
           ))}
         </div>
 
+        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">
+          Step {step + 1} of {STEPS.length}
+        </p>
         <h3 className="text-base font-bold text-white mb-2">{current.title}</h3>
         <p className="text-sm text-slate-400 leading-relaxed mb-5">{current.description}</p>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {step > 0 && (
               <button
                 onClick={handleBack}
@@ -266,7 +317,7 @@ export default function TutorialOverlay({ uid, onComplete }: Props) {
 
           <button
             onClick={handleNext}
-            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2 text-sm font-semibold text-white transition-all"
+            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2 text-sm font-semibold text-white transition-all active:scale-95"
           >
             {isLast ? 'Get started' : 'Next'}
             {!isLast && <ArrowRight className="h-3.5 w-3.5" />}
