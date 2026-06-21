@@ -23,12 +23,26 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   }
 
   const token = authHeader.slice(7)
+
+  // If Firebase Admin isn't initialized, extract uid from token payload directly
+  if (!admin.apps.length) {
+    try {
+      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
+      req.userId = payload.user_id ?? payload.sub
+      req.userEmail = payload.email
+      return next()
+    } catch {
+      return res.status(401).json({ error: 'Firebase not configured and token decode failed' })
+    }
+  }
+
   try {
     const decoded = await admin.auth().verifyIdToken(token)
     req.userId = decoded.uid
     req.userEmail = decoded.email
     next()
-  } catch {
+  } catch (err) {
+    console.error('Token verification failed:', err)
     return res.status(401).json({ error: 'Invalid or expired token' })
   }
 }

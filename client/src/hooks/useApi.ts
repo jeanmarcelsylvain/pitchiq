@@ -9,8 +9,11 @@ export function useApi() {
   async function getToken(): Promise<string | null> {
     if (isDemoMode || !user) return null
     try {
-      return await auth.currentUser?.getIdToken() ?? null
-    } catch {
+      const token = await auth.currentUser?.getIdToken() ?? null
+      if (!token) console.warn('useApi: no token — currentUser:', auth.currentUser?.uid)
+      return token
+    } catch (err) {
+      console.error('useApi: getIdToken failed', err)
       return null
     }
   }
@@ -20,7 +23,10 @@ export function useApi() {
     options: RequestInit = {}
   ): Promise<T | null> {
     const token = await getToken()
-    if (!token) return null
+    if (!token) {
+      console.warn('useApi: skipping request, no token', path)
+      return null
+    }
 
     const res = await fetch(`${RAILWAY_URL}${path}`, {
       ...options,
