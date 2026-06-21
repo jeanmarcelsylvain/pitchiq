@@ -5,7 +5,7 @@ import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } fro
 export default function ScoutView() {
   const { encoded } = useParams<{ encoded: string }>()
 
-  let data: {
+  type ProfileData = {
     name: string
     position: string
     club: string
@@ -20,14 +20,24 @@ export default function ScoutView() {
       avgSprintSpeed: number
       winRate: number
     }
-  } | null = null
+  }
+
+  let data: ProfileData | null = null
 
   try {
-    data = JSON.parse(atob(encoded ?? ''))
+    data = JSON.parse(atob(encoded ?? '')) as ProfileData
   } catch {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <p className="text-slate-500">Invalid or expired profile link.</p>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <p className="text-slate-500">Invalid profile link.</p>
       </div>
     )
   }

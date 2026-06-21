@@ -15,7 +15,7 @@ export default function RecruitProfile() {
 
   const totalGoals = matches.reduce((s, m) => s + m.goals, 0)
   const totalAssists = matches.reduce((s, m) => s + m.assists, 0)
-  const wins = matches.filter(m => m.result === 'W').length
+  const wins = matches.filter(m => m.result === 'win').length
   const winRate = matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0
 
   const radarData = [
@@ -159,10 +159,10 @@ export default function RecruitProfile() {
                   <div key={i} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <span className={`h-5 w-5 flex items-center justify-center rounded text-xs font-bold ${
-                        m.result === 'W' ? 'bg-pitch-600/20 text-pitch-400' :
-                        m.result === 'D' ? 'bg-yellow-600/20 text-yellow-400' :
+                        m.result === 'win' ? 'bg-pitch-600/20 text-pitch-400' :
+                        m.result === 'draw' ? 'bg-yellow-600/20 text-yellow-400' :
                         'bg-red-600/20 text-red-400'
-                      }`}>{m.result}</span>
+                      }`}>{m.result === 'win' ? 'W' : m.result === 'draw' ? 'D' : 'L'}</span>
                       <span className="text-slate-400 text-xs">{m.opponent ?? 'Opponent'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-slate-500">
