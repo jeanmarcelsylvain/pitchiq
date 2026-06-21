@@ -149,7 +149,7 @@ export default function Landing() {
               Explore demo instead
             </button>
             <span className="text-slate-700">·</span>
-            <p className="text-xs text-slate-600">No credit card required</p>
+            <p className="text-xs text-slate-600">Free to start · AI features from $4.99/mo</p>
           </div>
         </div>
       </section>
