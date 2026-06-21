@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useAppData } from '@/hooks/useAppData'
 import { useAuth } from '@/hooks/useAuth'
+import { useApi } from '@/hooks/useApi'
 import type { Goal } from '@/types'
 
 const categoryConfig = {
@@ -43,6 +44,7 @@ function Input({ className = '', ...props }: React.InputHTMLAttributes<HTMLInput
 export default function Goals() {
   const { goals: initialGoals, isDemo } = useAppData()
   const { user } = useAuth()
+  const { apiFetch } = useApi()
   const [goals, setGoals] = useState<Goal[]>(initialGoals)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(emptyForm)
@@ -63,6 +65,7 @@ export default function Goals() {
     setGoals(updated)
     if (!isDemo && user) {
       localStorage.setItem(`goals_${user.uid}`, JSON.stringify(updated))
+      apiFetch('/api/goals', { method: 'POST', body: JSON.stringify(form) }).catch(() => {})
     }
     setForm(emptyForm)
     setShowForm(false)
@@ -70,6 +73,12 @@ export default function Goals() {
 
   const markComplete = (id: string) => {
     setGoals(prev => prev.map(g => g.id === id ? { ...g, completed: true } : g))
+    if (!isDemo && user) {
+      apiFetch(`/api/goals/${id}/progress`, {
+        method: 'PATCH',
+        body: JSON.stringify({ currentValue: goals.find(g => g.id === id)?.targetValue }),
+      }).catch(() => {})
+    }
   }
 
   return (

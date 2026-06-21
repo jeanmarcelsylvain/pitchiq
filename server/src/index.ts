@@ -13,6 +13,11 @@ import coachRoutes from './routes/coach'
 import injuryRoutes from './routes/injury'
 import trainingRoutes from './routes/training'
 import subscriptionRoutes from './routes/subscription'
+import profileRoutes from './routes/profile'
+import injuriesDbRoutes from './routes/injuries_db'
+import scheduledMatchesRoutes from './routes/scheduled_matches'
+import seasonsRoutes from './routes/seasons'
+import trainingPlansRoutes from './routes/training_plans'
 
 dotenv.config()
 
@@ -60,6 +65,11 @@ app.use('/api/coach', coachRoutes)
 app.use('/api/injury', injuryRoutes)
 app.use('/api/training', trainingRoutes)
 app.use('/api/subscription', subscriptionRoutes)
+app.use('/api/profile', profileRoutes)
+app.use('/api/injuries-db', injuriesDbRoutes)
+app.use('/api/scheduled-matches', scheduledMatchesRoutes)
+app.use('/api/seasons', seasonsRoutes)
+app.use('/api/training-plans', trainingPlansRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' })

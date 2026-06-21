@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Activity, Plus, ChevronRight, AlertTriangle, CheckCircle, Clock, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useApi } from '@/hooks/useApi'
 
 const RAILWAY_URL = 'https://pitchiq-production-facc.up.railway.app'
 
@@ -55,6 +56,7 @@ function renderMessage(text: string) {
 
 export default function Injuries() {
   const { user, isDemoMode } = useAuth()
+  const { apiFetch } = useApi()
   const uid = isDemoMode ? 'demo' : user?.uid ?? ''
 
   const [injuries, setInjuries] = useState<InjuryRecord[]>(() => {
@@ -161,6 +163,13 @@ export default function Injuries() {
           conversation: newHistory,
         }
         setInjuries(prev => [record, ...prev])
+        if (!isDemoMode) {
+          apiFetch('/api/injuries-db', { method: 'POST', body: JSON.stringify({
+            date: record.date, type: record.type, bodyPart: record.bodyPart,
+            severity: record.severity, status: record.status, plan: record.plan,
+            conversation: record.conversation,
+          })}).catch(() => {})
+        }
       }
     } catch {
       setMessages(prev => prev.map(m => m.id === aiId ? {
@@ -179,6 +188,9 @@ export default function Injuries() {
   const updateStatus = (id: string, status: InjuryRecord['status']) => {
     setInjuries(prev => prev.map(i => i.id === id ? { ...i, status } : i))
     if (selectedInjury?.id === id) setSelectedInjury(prev => prev ? { ...prev, status } : null)
+    if (!isDemoMode) {
+      apiFetch(`/api/injuries-db/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }).catch(() => {})
+    }
   }
 
   const severityColor = (s: InjuryRecord['severity']) => ({

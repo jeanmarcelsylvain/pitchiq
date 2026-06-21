@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { useAppData } from '@/hooks/useAppData'
 import { useAuth } from '@/hooks/useAuth'
+import { useApi } from '@/hooks/useApi'
 import { formatDate, getResultBadge, getRatingColor, getPositionColor } from '@/lib/utils'
 import type { Match, Position } from '@/types'
 
@@ -58,31 +59,47 @@ function Select({ className = '', ...props }: React.SelectHTMLAttributes<HTMLSel
 export default function Matches() {
   const { matches: initialMatches, isDemo } = useAppData()
   const { user } = useAuth()
+  const { apiFetch } = useApi()
   const [matches, setMatches] = useState<Match[]>(initialMatches)
   const [showForm, setShowForm] = useState(false)
   const [search, setSearch] = useState('')
   const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
 
   const filtered = matches.filter(m =>
     m.opponent.toLowerCase().includes(search.toLowerCase()) ||
     m.competition.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newMatch: Match = {
-      ...form,
-      id: crypto.randomUUID(),
-      userId: user?.uid ?? 'demo-user',
-      createdAt: new Date().toISOString(),
+    setSaving(true)
+    try {
+      if (!isDemo && user) {
+        // Save to DB (optimistically update UI first)
+        const optimistic: Match = {
+          ...form, id: crypto.randomUUID(),
+          userId: user.uid, createdAt: new Date().toISOString(),
+        }
+        const updated = [optimistic, ...matches]
+        setMatches(updated)
+        localStorage.setItem(`matches_${user.uid}`, JSON.stringify(updated))
+        setForm(emptyForm)
+        setShowForm(false)
+        // Persist to DB in background
+        apiFetch('/api/matches', { method: 'POST', body: JSON.stringify(form) }).catch(() => {})
+      } else {
+        const newMatch: Match = {
+          ...form, id: crypto.randomUUID(),
+          userId: 'demo-user', createdAt: new Date().toISOString(),
+        }
+        setMatches(prev => [newMatch, ...prev])
+        setForm(emptyForm)
+        setShowForm(false)
+      }
+    } finally {
+      setSaving(false)
     }
-    const updated = [newMatch, ...matches]
-    setMatches(updated)
-    if (!isDemo && user) {
-      localStorage.setItem(`matches_${user.uid}`, JSON.stringify(updated))
-    }
-    setForm(emptyForm)
-    setShowForm(false)
   }
 
   const field = (key: keyof typeof form, value: string | number) =>

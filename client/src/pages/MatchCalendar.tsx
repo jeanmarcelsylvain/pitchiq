@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X, Calendar } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppData } from '@/hooks/useAppData'
+import { useApi } from '@/hooks/useApi'
 
 interface ScheduledMatch {
   id: string
@@ -34,6 +35,8 @@ export default function MatchCalendar() {
     date: '', opponent: '', competition: '', venue: 'home', kickoffTime: '15:00', notes: '',
   })
 
+  const { apiFetch } = useApi()
+
   const saveScheduled = (updated: ScheduledMatch[]) => {
     setScheduled(updated)
     localStorage.setItem(SCHED_KEY(uid), JSON.stringify(updated))
@@ -45,9 +48,17 @@ export default function MatchCalendar() {
     saveScheduled([...scheduled, record])
     setShowForm(false)
     setForm({ date: '', opponent: '', competition: '', venue: 'home', kickoffTime: '15:00', notes: '' })
+    if (!isDemoMode) {
+      apiFetch('/api/scheduled-matches', { method: 'POST', body: JSON.stringify(form) }).catch(() => {})
+    }
   }
 
-  const deleteScheduled = (id: string) => saveScheduled(scheduled.filter(m => m.id !== id))
+  const deleteScheduled = (id: string) => {
+    saveScheduled(scheduled.filter(m => m.id !== id))
+    if (!isDemoMode) {
+      apiFetch(`/api/scheduled-matches/${id}`, { method: 'DELETE' }).catch(() => {})
+    }
+  }
 
   // Build calendar grid
   const firstDay = new Date(viewDate.year, viewDate.month, 1).getDay()

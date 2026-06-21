@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Archive, Plus, ChevronDown, ChevronUp, Trophy, Target, Star, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppData } from '@/hooks/useAppData'
+import { useApi } from '@/hooks/useApi'
 import type { Match } from '@/types'
 
 interface ArchivedSeason {
@@ -26,6 +27,7 @@ function MATCHES_KEY(uid: string) { return `matches_${uid}` }
 export default function SeasonArchive() {
   const { user, isDemoMode } = useAuth()
   const { matches, seasonStats } = useAppData()
+  const { apiFetch } = useApi()
   const uid = isDemoMode ? 'demo' : user?.uid ?? ''
 
   const [archive, setArchive] = useState<ArchivedSeason[]>(() => {
@@ -61,9 +63,16 @@ export default function SeasonArchive() {
     const updated = [season, ...archive]
     setArchive(updated)
     localStorage.setItem(ARCHIVE_KEY(uid), JSON.stringify(updated))
-
-    // Clear current matches
     localStorage.setItem(MATCHES_KEY(uid), JSON.stringify([]))
+
+    if (!isDemoMode) {
+      apiFetch('/api/seasons', { method: 'POST', body: JSON.stringify({
+        name: season.name, startDate: season.startDate, endDate: season.endDate,
+        matches: season.matches, goals: season.goals, assists: season.assists,
+        wins: season.wins, losses: season.losses, draws: season.draws,
+        avgRating: season.avgRating, highlights: season.highlights,
+      })}).catch(() => {})
+    }
     setShowArchiveForm(false)
     setConfirming(false)
     window.location.reload()

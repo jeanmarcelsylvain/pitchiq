@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Dumbbell, Sparkles, RefreshCw, Calendar, Clock, ChevronDown, ChevronUp, Save, Check, Zap, Moon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppData } from '@/hooks/useAppData'
+import { useApi } from '@/hooks/useApi'
 
 const RAILWAY_URL = 'https://pitchiq-production-facc.up.railway.app'
 
@@ -124,6 +125,7 @@ function intensityBarWidth(i: DayPlan['intensity']) {
 export default function TrainingPlan() {
   const { user, isDemoMode } = useAuth()
   const { profile, seasonStats, matches } = useAppData()
+  const { apiFetch } = useApi()
   const uid = isDemoMode ? 'demo' : user?.uid ?? ''
 
   const [savedPlan, setSavedPlan] = useState<WeeklyPlan | null>(() => {
@@ -214,6 +216,12 @@ export default function TrainingPlan() {
       }
       setSavedPlan(plan)
       localStorage.setItem(PLAN_KEY(uid), JSON.stringify(plan))
+      if (!isDemoMode) {
+        apiFetch('/api/training-plans', { method: 'POST', body: JSON.stringify({
+          plan: days, rawText: fullText,
+          position: plan.position, days: daysPerWeek, duration: sessionLength,
+        })}).catch(() => {})
+      }
       setStreamText('')
       setExpandedDay(days[0]?.day ?? null)
     } catch (err) {

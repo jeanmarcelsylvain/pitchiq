@@ -1,0 +1,43 @@
+import { useAuth } from './useAuth'
+import { getAuth } from 'firebase/auth'
+
+const RAILWAY_URL = 'https://pitchiq-production-facc.up.railway.app'
+
+export function useApi() {
+  const { user, isDemoMode } = useAuth()
+
+  async function getToken(): Promise<string | null> {
+    if (isDemoMode || !user) return null
+    try {
+      return await getAuth().currentUser?.getIdToken() ?? null
+    } catch {
+      return null
+    }
+  }
+
+  async function apiFetch<T = unknown>(
+    path: string,
+    options: RequestInit = {}
+  ): Promise<T | null> {
+    const token = await getToken()
+    if (!token) return null
+
+    const res = await fetch(`${RAILWAY_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(options.headers ?? {}),
+      },
+    })
+
+    if (res.status === 204) return null
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(err.error ?? 'API error')
+    }
+    return res.json() as Promise<T>
+  }
+
+  return { apiFetch, isDemoMode, user }
+}
