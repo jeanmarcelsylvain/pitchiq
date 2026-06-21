@@ -286,6 +286,7 @@ export default function Highlights() {
         filters: { ...DEFAULT_FILTERS },
         textOverlays: [], transition: 'fade',
         aspectRatio: exportAspect,
+        thumbnail,
       }
       setClips(prev => [...prev, clip])
       setSelectedId(clip.id)
