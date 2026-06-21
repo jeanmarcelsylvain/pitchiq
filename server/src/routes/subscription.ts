@@ -60,7 +60,7 @@ router.get('/verify', async (req: Request, res: Response) => {
       expand: ['subscription'],
     })
 
-    const sub = session.subscription as Stripe.Subscription | null
+    const sub = session.subscription as { status: string } | null
     const active = sub?.status === 'active' || sub?.status === 'trialing'
 
     res.json({
@@ -106,32 +106,31 @@ router.post('/webhook', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
-  let event: Stripe.Event
+  let event: { type: string; data: { object: any } }
   try {
     event = webhookSecret
       ? stripe.webhooks.constructEvent(req.body, sig, webhookSecret)
-      : (JSON.parse(req.body.toString()) as Stripe.Event)
+      : JSON.parse(req.body.toString())
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Webhook error'
     return res.status(400).send(`Webhook Error: ${msg}`)
   }
 
-  // Log the event type — you can add Firestore writes here later
   console.log(`Stripe event: ${event.type}`)
 
   switch (event.type) {
     case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.CheckoutSession
+      const session = event.data.object
       console.log(`New subscription: uid=${session.metadata?.uid} customer=${session.customer}`)
       break
     }
     case 'customer.subscription.deleted': {
-      const sub = event.data.object as Stripe.Subscription
+      const sub = event.data.object
       console.log(`Subscription cancelled: customer=${sub.customer}`)
       break
     }
     case 'customer.subscription.updated': {
-      const sub = event.data.object as Stripe.Subscription
+      const sub = event.data.object
       console.log(`Subscription updated: customer=${sub.customer} status=${sub.status}`)
       break
     }
