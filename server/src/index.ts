@@ -12,6 +12,7 @@ import analyticsRoutes from './routes/analytics'
 import coachRoutes from './routes/coach'
 import injuryRoutes from './routes/injury'
 import trainingRoutes from './routes/training'
+import subscriptionRoutes from './routes/subscription'
 
 dotenv.config()
 
@@ -36,6 +37,8 @@ app.use(cors({
   credentials: true,
 }))
 
+// Stripe webhook needs raw body — must come before express.json()
+app.use('/api/subscription/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json({ limit: '10kb' }))
 
 const limiter = rateLimit({
@@ -56,6 +59,7 @@ app.use('/api/analytics', analyticsRoutes)
 app.use('/api/coach', coachRoutes)
 app.use('/api/injury', injuryRoutes)
 app.use('/api/training', trainingRoutes)
+app.use('/api/subscription', subscriptionRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' })

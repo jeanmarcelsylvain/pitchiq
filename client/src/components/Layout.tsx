@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import type { ReactNode } from 'react'
 
 const navGroups = [
@@ -56,6 +57,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, isDemoMode, signOut } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const { isPro, startCheckout } = useSubscription()
   const navigate = useNavigate()
 
   const handleSignOut = async () => { await signOut(); navigate('/') }
@@ -125,6 +127,31 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
+
+        {/* Upgrade banner for free users */}
+        {!isPro && !isDemoMode && (
+          <div className="px-2 pb-2">
+            <button onClick={startCheckout}
+              className="w-full rounded-xl bg-gradient-to-r from-green-700 to-green-600 hover:from-green-600 hover:to-green-500 p-3 text-left transition-all group">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="h-3.5 w-3.5 text-green-300" />
+                <span className="text-xs font-bold text-white">Upgrade to Pro</span>
+              </div>
+              <p className="text-xs text-green-200/70">Unlock AI Coach, Training Plans & more</p>
+              <p className="text-xs font-semibold text-green-300 mt-1">$4.99 / month →</p>
+            </button>
+          </div>
+        )}
+
+        {isPro && !isDemoMode && (
+          <div className="px-2 pb-2">
+            <NavLink to="/pricing"
+              className="flex items-center gap-2 w-full rounded-xl border border-green-600/30 bg-green-600/10 px-3 py-2">
+              <Sparkles className="h-3.5 w-3.5 text-green-400" />
+              <span className="text-xs font-semibold text-green-400">Pro Member</span>
+            </NavLink>
+          </div>
+        )}
 
         {/* User footer */}
         <div className="border-t border-slate-800 p-3 space-y-2">
