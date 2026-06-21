@@ -1,0 +1,197 @@
+import { useRef } from 'react'
+import { useAppData } from '@/hooks/useAppData'
+import { useAuth } from '@/hooks/useAuth'
+import { Download, Share2, Copy, Check } from 'lucide-react'
+import { useState } from 'react'
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
+
+export default function RecruitProfile() {
+  const { profile, seasonStats, matches } = useAppData()
+  const { user, isDemoMode } = useAuth()
+  const printRef = useRef<HTMLDivElement>(null)
+  const [copied, setCopied] = useState(false)
+
+  const uid = isDemoMode ? 'demo' : user?.uid ?? ''
+
+  const totalGoals = matches.reduce((s, m) => s + m.goals, 0)
+  const totalAssists = matches.reduce((s, m) => s + m.assists, 0)
+  const wins = matches.filter(m => m.result === 'W').length
+  const winRate = matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0
+
+  const radarData = [
+    { skill: 'Finishing', value: Math.min(100, totalGoals * 8 + 30) },
+    { skill: 'Passing', value: seasonStats.avgPassAccuracy || 70 },
+    { skill: 'Pace', value: Math.min(100, (seasonStats.avgSprintSpeed / 35) * 100) },
+    { skill: 'Consistency', value: Math.min(100, seasonStats.avgRating * 10) },
+    { skill: 'Creativity', value: Math.min(100, totalAssists * 10 + 30) },
+    { skill: 'Work Rate', value: Math.min(100, matches.length * 4 + 40) },
+  ]
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  // Encode profile data into shareable URL
+  const handleShare = () => {
+    const data = {
+      name: profile.name,
+      position: profile.primaryPosition,
+      club: profile.club,
+      age: profile.age,
+      foot: profile.dominantFoot,
+      stats: {
+        matches: matches.length,
+        goals: totalGoals,
+        assists: totalAssists,
+        avgRating: seasonStats.avgRating,
+        avgPassAccuracy: seasonStats.avgPassAccuracy,
+        avgSprintSpeed: seasonStats.avgSprintSpeed,
+        winRate,
+      },
+    }
+    const encoded = btoa(JSON.stringify(data))
+    const url = `${window.location.origin}/scout/${encoded}`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  return (
+    <div className="space-y-6 animate-slide-up">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Recruitment Profile</h1>
+          <p className="mt-1 text-sm text-slate-500">Share with coaches, scouts, and college programs</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:text-white transition-all"
+          >
+            {copied ? <Check className="h-4 w-4 text-pitch-400" /> : <Copy className="h-4 w-4" />}
+            {copied ? 'Link copied!' : 'Copy share link'}
+          </button>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2 text-sm font-semibold text-white transition-all"
+          >
+            <Download className="h-4 w-4" />
+            Download PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Print-ready profile card */}
+      <div ref={printRef} className="print-profile rounded-2xl border border-slate-700 bg-slate-900 overflow-hidden">
+
+        {/* Header */}
+        <div className="bg-gradient-to-r from-pitch-900/60 to-slate-900 border-b border-slate-800 px-8 py-8">
+          <div className="flex items-start gap-6">
+            <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-pitch-600/20 text-3xl font-bold text-pitch-400 border border-pitch-600/30">
+              {profile.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'P'}
+            </div>
+            <div className="flex-1">
+              <h2 className="text-3xl font-extrabold text-white">{profile.name ?? 'Player'}</h2>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <span className="rounded-lg bg-pitch-600/20 border border-pitch-600/30 px-3 py-1 text-sm font-semibold text-pitch-400">
+                  {profile.primaryPosition ?? 'N/A'}
+                </span>
+                {profile.club && (
+                  <span className="text-sm text-slate-400">{profile.club}</span>
+                )}
+                {profile.age && (
+                  <span className="text-sm text-slate-400">Age {profile.age}</span>
+                )}
+                {profile.dominantFoot && (
+                  <span className="text-sm text-slate-400">{profile.dominantFoot} foot</span>
+                )}
+              </div>
+            </div>
+            <div className="text-right hidden sm:block">
+              <p className="text-xs text-slate-600 uppercase tracking-widest">Generated by</p>
+              <p className="text-sm font-bold text-pitch-400">MyFutbolPro</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats grid */}
+        <div className="px-8 py-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Season Statistics</p>
+          <div className="grid grid-cols-3 gap-4 lg:grid-cols-6">
+            {[
+              { label: 'Matches', value: matches.length },
+              { label: 'Goals', value: totalGoals },
+              { label: 'Assists', value: totalAssists },
+              { label: 'Avg Rating', value: `${seasonStats.avgRating.toFixed(1)}/10` },
+              { label: 'Pass Acc.', value: `${seasonStats.avgPassAccuracy}%` },
+              { label: 'Win Rate', value: `${winRate}%` },
+            ].map(({ label, value }) => (
+              <div key={label} className="text-center rounded-xl border border-slate-800 bg-slate-800/40 p-4">
+                <p className="text-2xl font-extrabold text-white">{value}</p>
+                <p className="text-xs text-slate-500 mt-1">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Radar + recent form */}
+        <div className="grid gap-6 px-8 pb-8 lg:grid-cols-2">
+          {/* Radar */}
+          <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Skill Profile</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="#1e293b" />
+                <PolarAngleAxis dataKey="skill" tick={{ fill: '#64748b', fontSize: 11 }} />
+                <Radar dataKey="value" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} strokeWidth={2} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Recent form */}
+          <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Recent Form</p>
+            {matches.length === 0 ? (
+              <p className="text-sm text-slate-600 text-center py-8">No matches logged yet</p>
+            ) : (
+              <div className="space-y-2">
+                {matches.slice(0, 6).map((m, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-5 w-5 flex items-center justify-center rounded text-xs font-bold ${
+                        m.result === 'W' ? 'bg-pitch-600/20 text-pitch-400' :
+                        m.result === 'D' ? 'bg-yellow-600/20 text-yellow-400' :
+                        'bg-red-600/20 text-red-400'
+                      }`}>{m.result}</span>
+                      <span className="text-slate-400 text-xs">{m.opponent ?? 'Opponent'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                      <span>{m.goals}G {m.assists}A</span>
+                      <span className="text-white font-semibold">{m.rating}/10</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-slate-800 px-8 py-4 flex items-center justify-between">
+          <p className="text-xs text-slate-600">Generated by MyFutbolPro · myfutbolpro.vercel.app</p>
+          <p className="text-xs text-slate-600">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+        </div>
+      </div>
+
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .print-profile, .print-profile * { visibility: visible; }
+          .print-profile { position: absolute; left: 0; top: 0; width: 100%; border: none !important; }
+          nav, header, aside { display: none !important; }
+        }
+      `}</style>
+    </div>
+  )
+}

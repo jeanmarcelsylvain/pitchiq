@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Activity, ClipboardList, Target, User,
-  LogOut, Menu, X, Zap, ChevronRight, Bell, Sparkles
+  LogOut, Menu, X, Zap, ChevronRight, Bell, Sparkles, Trophy, FileText, Film
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -14,6 +14,9 @@ const navItems = [
   { to: '/analytics', icon: Activity, label: 'Analytics' },
   { to: '/goals', icon: Target, label: 'Goals' },
   { to: '/ai-coach', icon: Sparkles, label: 'AI Coach', highlight: true },
+  { to: '/highlights', icon: Film, label: 'Highlights' },
+  { to: '/achievements', icon: Trophy, label: 'Achievements' },
+  { to: '/recruit', icon: FileText, label: 'Recruit Profile' },
   { to: '/profile', icon: User, label: 'Profile' },
 ]
 

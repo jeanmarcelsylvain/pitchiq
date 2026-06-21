@@ -9,6 +9,10 @@ import Analytics from '@/pages/Analytics'
 import Goals from '@/pages/Goals'
 import Profile from '@/pages/Profile'
 import AICoach from '@/pages/AICoach'
+import Achievements from '@/pages/Achievements'
+import RecruitProfile from '@/pages/RecruitProfile'
+import Highlights from '@/pages/Highlights'
+import ScoutView from '@/pages/ScoutView'
 import TutorialOverlay, { TOUR_KEY } from '@/components/TutorialOverlay'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
@@ -85,6 +89,10 @@ function AppRoutes() {
       <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/ai-coach" element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
+      <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
+      <Route path="/recruit" element={<ProtectedRoute><RecruitProfile /></ProtectedRoute>} />
+      <Route path="/highlights" element={<ProtectedRoute><Highlights /></ProtectedRoute>} />
+      <Route path="/scout/:encoded" element={<ScoutView />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
