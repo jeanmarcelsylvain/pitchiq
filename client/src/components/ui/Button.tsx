@@ -9,11 +9,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary: 'bg-pitch-600 hover:bg-pitch-500 text-white shadow-sm shadow-pitch-900/50 border border-pitch-500/50',
+  primary:   'bg-pitch-600 hover:bg-pitch-500 text-white font-semibold shadow-glow-green-sm hover:shadow-glow-green border border-pitch-500/50 transition-shadow',
   secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700',
-  ghost: 'hover:bg-slate-800/60 text-slate-400 hover:text-slate-200',
-  danger: 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30',
-  outline: 'border border-slate-700 hover:border-slate-600 text-slate-300 hover:bg-slate-800/40',
+  ghost:     'hover:bg-slate-800/60 text-slate-400 hover:text-slate-200',
+  danger:    'bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30',
+  outline:   'border border-slate-700 hover:border-slate-600 text-slate-300 hover:bg-slate-800/40',
 }
 
 const sizes = {
@@ -28,7 +28,7 @@ export function Button({ variant = 'secondary', size = 'md', children, loading, 
       {...props}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex items-center gap-2 rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-pitch-500/50 disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center gap-2 rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-pitch-500/40 disabled:opacity-50 disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         className
