@@ -11,8 +11,8 @@ const BLACK  = '#161025'   // deep indigo/aubergine base (formerly near-black)
 const CREAM  = '#f4ede2'
 const GRAY   = '#211a30'
 const BORDER = '#3c3050'
-const DIM    = '#cdbfd9'   // bright secondary text
-const MUTED  = '#8f829e'   // tertiary text
+const DIM    = '#e4d8f4'   // bright secondary text
+const MUTED  = '#c0aed8'   // tertiary text
 
 const BC = { fontFamily: '"Barlow Condensed", sans-serif' }
 const B  = { fontFamily: '"Barlow", sans-serif' }
