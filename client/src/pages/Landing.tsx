@@ -6,13 +6,13 @@ import { X, ArrowUpRight, Check } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 /* ─── Constants ───────────────────────────────────────────────────────────── */
-const LIME   = '#d4ff00'
-const BLACK  = '#080808'
-const CREAM  = '#f5f2ea'
-const GRAY   = '#111111'
-const BORDER = '#2e2e2e'
-const DIM    = '#c0bdb5'   // bright secondary text
-const MUTED  = '#888880'   // tertiary text
+const LIME   = '#ff5a3c'   // coral-orange accent (formerly lime)
+const BLACK  = '#161025'   // deep indigo/aubergine base (formerly near-black)
+const CREAM  = '#f4ede2'
+const GRAY   = '#211a30'
+const BORDER = '#3c3050'
+const DIM    = '#cdbfd9'   // bright secondary text
+const MUTED  = '#8f829e'   // tertiary text
 
 const BC = { fontFamily: '"Barlow Condensed", sans-serif' }
 const B  = { fontFamily: '"Barlow", sans-serif' }
@@ -145,7 +145,7 @@ export default function Landing() {
         {/* Big decorative number behind */}
         <motion.div style={{ y: heroY, opacity: heroO }}
           className="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none select-none overflow-hidden">
-          <span style={{ ...BC, fontSize: 'clamp(220px, 40vw, 480px)', fontWeight: 800, color: '#1a1a1a', lineHeight: 1, letterSpacing: '-0.04em', userSelect: 'none' }}>
+          <span style={{ ...BC, fontSize: 'clamp(220px, 40vw, 480px)', fontWeight: 800, color: '#241d33', lineHeight: 1, letterSpacing: '-0.04em', userSelect: 'none' }}>
             IQ
           </span>
         </motion.div>
@@ -322,7 +322,7 @@ export default function Landing() {
                     </linearGradient>
                   </defs>
                   {/* grid lines */}
-                  {[30,60,90].map(y => <line key={y} x1="0" y1={y} x2="320" y2={y} stroke="#222" strokeWidth="1"/>)}
+                  {[30,60,90].map(y => <line key={y} x1="0" y1={y} x2="320" y2={y} stroke="#332a44" strokeWidth="1"/>)}
                   {/* area fill */}
                   <path d="M0,95 L40,82 L80,88 L120,65 L160,60 L200,42 L240,35 L280,22 L320,15 L320,120 L0,120 Z" fill="url(#g1)"/>
                   {/* line */}
@@ -439,7 +439,7 @@ export default function Landing() {
             ].map(({ n, t, b }, i) => (
               <Reveal key={n} delay={i * 0.08}>
                 <div style={{ borderTop: `2px solid ${i === 0 ? LIME : BORDER}`, paddingTop: '2rem', paddingRight: i < 2 ? '3rem' : 0, marginRight: i < 2 ? '3rem' : 0, borderRight: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                  <p style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: '#3a3a3a', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: '1.5rem' }}>{n}</p>
+                  <p style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: '#473a5c', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: '1.5rem' }}>{n}</p>
                   <p style={{ ...BC, fontSize: '1rem', fontWeight: 700, color: CREAM, letterSpacing: '0.04em', marginBottom: '0.75rem' }}>{t}</p>
                   <p style={{ ...B, color: MUTED, fontSize: '0.875rem', lineHeight: 1.65 }}>{b}</p>
                 </div>
@@ -483,7 +483,7 @@ export default function Landing() {
 
             {/* Pro */}
             <Reveal delay={0.08}>
-              <div style={{ border: `2px solid ${LIME}`, padding: '2rem', height: '100%', display: 'flex', flexDirection: 'column', background: 'rgba(194,255,0,0.03)' }}>
+              <div style={{ border: `2px solid ${LIME}`, padding: '2rem', height: '100%', display: 'flex', flexDirection: 'column', background: 'rgba(255,90,60,0.05)' }}>
                 <div className="flex items-center justify-between mb-4">
                   <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.18em', color: LIME }}>PRO</p>
                   <span style={{ ...BC, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', background: LIME, color: BLACK, padding: '2px 8px' }}>POPULAR</span>
@@ -516,7 +516,7 @@ export default function Landing() {
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
-            <p style={{ ...B, color: '#2a2a00', fontSize: '1rem', lineHeight: 1.7, marginBottom: '2rem' }}>
+            <p style={{ ...B, color: '#3a1208', fontSize: '1rem', lineHeight: 1.7, marginBottom: '2rem' }}>
               Join hundreds of competitive youth players who track their development with PitchIQ. Free to start — takes 2 minutes to set up.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
