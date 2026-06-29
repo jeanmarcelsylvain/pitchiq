@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import type { Variants } from 'framer-motion'
 import { LogIn, X, Check, ChevronRight, ArrowRight, BarChart2, Target, Activity, Zap, Shield, TrendingUp } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 /* ─── Motion helpers ──────────────────────────────────────────────────────── */
-const fadeUp = {
+const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
+
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
 }
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0 },
   show:   { opacity: 1, transition: { duration: 0.4 } },
 }
@@ -312,7 +315,7 @@ export default function Landing() {
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.6, ease: [0.22,1,0.36,1] }}
+            transition={{ delay: 0.6, duration: 0.6, ease: EASE }}
             className="mt-16 mx-auto max-w-2xl grid grid-cols-4 gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-card"
           >
             {[
@@ -387,7 +390,7 @@ export default function Landing() {
 
               {/* Visual block */}
               <motion.div
-                variants={{ hidden: { opacity: 0, x: i % 2 === 0 ? 40 : -40 }, show: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.22,1,0.36,1] } } }}
+                variants={{ hidden: { opacity: 0, x: i % 2 === 0 ? 40 : -40 }, show: { opacity: 1, x: 0, transition: { duration: 0.6, ease: EASE } } }}
                 className="flex-1"
               >
                 {visual === 'metrics' && (
@@ -458,7 +461,7 @@ export default function Landing() {
                             initial={{ width: 0 }}
                             whileInView={{ width: `${pct}%` }}
                             viewport={{ once: true }}
-                            transition={{ duration: 1, delay: 0.2, ease: [0.22,1,0.36,1] }}
+                            transition={{ duration: 1, delay: 0.2, ease: EASE }}
                           />
                         </div>
                       </div>
