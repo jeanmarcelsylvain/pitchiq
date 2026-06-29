@@ -57,15 +57,15 @@ const navGroups = [
 function LogoMark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="16,1 29,8 29,24 16,31 3,24 3,8" fill="#00a844" stroke="#00e676" strokeWidth="1"/>
-      <polygon points="16,6 24,10.5 24,21.5 16,26 8,21.5 8,10.5" fill="#008535" />
-      <circle cx="16" cy="16" r="4" fill="#00e676" opacity="0.9"/>
-      <line x1="16" y1="6" x2="16" y2="10" stroke="#00e676" strokeWidth="1" opacity="0.6"/>
-      <line x1="24" y1="10.5" x2="20.5" y2="12.5" stroke="#00e676" strokeWidth="1" opacity="0.6"/>
-      <line x1="24" y1="21.5" x2="20.5" y2="19.5" stroke="#00e676" strokeWidth="1" opacity="0.6"/>
-      <line x1="16" y1="26" x2="16" y2="22" stroke="#00e676" strokeWidth="1" opacity="0.6"/>
-      <line x1="8" y1="21.5" x2="11.5" y2="19.5" stroke="#00e676" strokeWidth="1" opacity="0.6"/>
-      <line x1="8" y1="10.5" x2="11.5" y2="12.5" stroke="#00e676" strokeWidth="1" opacity="0.6"/>
+      <polygon points="16,1 29,8 29,24 16,31 3,24 3,8" fill="#e03c20" stroke="#ff7a60" strokeWidth="1"/>
+      <polygon points="16,6 24,10.5 24,21.5 16,26 8,21.5 8,10.5" fill="#b22c12" />
+      <circle cx="16" cy="16" r="4" fill="#ff7a60" opacity="0.9"/>
+      <line x1="16" y1="6" x2="16" y2="10" stroke="#ff7a60" strokeWidth="1" opacity="0.6"/>
+      <line x1="24" y1="10.5" x2="20.5" y2="12.5" stroke="#ff7a60" strokeWidth="1" opacity="0.6"/>
+      <line x1="24" y1="21.5" x2="20.5" y2="19.5" stroke="#ff7a60" strokeWidth="1" opacity="0.6"/>
+      <line x1="16" y1="26" x2="16" y2="22" stroke="#ff7a60" strokeWidth="1" opacity="0.6"/>
+      <line x1="8" y1="21.5" x2="11.5" y2="19.5" stroke="#ff7a60" strokeWidth="1" opacity="0.6"/>
+      <line x1="8" y1="10.5" x2="11.5" y2="12.5" stroke="#ff7a60" strokeWidth="1" opacity="0.6"/>
     </svg>
   )
 }

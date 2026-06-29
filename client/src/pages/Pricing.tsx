@@ -69,17 +69,17 @@ export default function Pricing() {
         </div>
 
         {/* Pro */}
-        <div className="rounded-2xl border border-green-600/40 bg-gradient-to-b from-green-600/10 to-slate-900/60 p-6 flex flex-col relative overflow-hidden">
+        <div className="rounded-2xl border border-pitch-600/40 bg-gradient-to-b from-green-600/10 to-slate-900/60 p-6 flex flex-col relative overflow-hidden">
           <div className="absolute top-4 right-4">
-            <span className="text-xs font-bold bg-green-600 text-white px-2.5 py-1 rounded-full">MOST POPULAR</span>
+            <span className="text-xs font-bold bg-pitch-600 text-white px-2.5 py-1 rounded-full">MOST POPULAR</span>
           </div>
 
           <div className="mb-5">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-green-600">
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-pitch-600">
                 <Sparkles className="h-3 w-3 text-white" />
               </div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-green-400">Pro</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-pitch-400">Pro</p>
             </div>
             <div className="flex items-end gap-1">
               <span className="text-4xl font-extrabold text-white">$4.99</span>
@@ -91,20 +91,20 @@ export default function Pricing() {
           <ul className="space-y-3 flex-1">
             {PRO_FEATURES.map((f, i) => (
               <li key={f} className={`flex items-start gap-2.5 text-sm ${i === 0 ? 'text-slate-400' : 'text-slate-200'}`}>
-                <Check className={`h-4 w-4 mt-0.5 flex-shrink-0 ${i === 0 ? 'text-slate-500' : 'text-green-500'}`} />
+                <Check className={`h-4 w-4 mt-0.5 flex-shrink-0 ${i === 0 ? 'text-slate-500' : 'text-pitch-500'}`} />
                 {f}
               </li>
             ))}
           </ul>
 
           <button onClick={handleProClick} disabled={loading}
-            className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-green-900/30">
+            className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 disabled:opacity-50 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-pitch-900/30">
             <Sparkles className="h-4 w-4" />
             {loading ? 'Loading…' : isPro ? 'Manage Subscription' : 'Upgrade to Pro'}
           </button>
 
           {isPro && (
-            <p className="mt-3 text-center text-xs text-green-400 font-medium">✓ You're on Pro</p>
+            <p className="mt-3 text-center text-xs text-pitch-400 font-medium">✓ You're on Pro</p>
           )}
         </div>
       </div>

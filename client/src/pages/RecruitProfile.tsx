@@ -143,7 +143,7 @@ export default function RecruitProfile() {
               <RadarChart data={radarData}>
                 <PolarGrid stroke="#1e293b" />
                 <PolarAngleAxis dataKey="skill" tick={{ fill: '#64748b', fontSize: 11 }} />
-                <Radar dataKey="value" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} strokeWidth={2} />
+                <Radar dataKey="value" stroke="#ff5a3c" fill="#ff5a3c" fillOpacity={0.15} strokeWidth={2} />
               </RadarChart>
             </ResponsiveContainer>
           </div>

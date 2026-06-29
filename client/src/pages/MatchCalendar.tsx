@@ -85,7 +85,7 @@ export default function MatchCalendar() {
           <p className="mt-1 text-sm text-slate-500">View past matches and schedule upcoming games</p>
         </div>
         <button onClick={() => { setShowForm(true); setForm(f => ({ ...f, date: selectedDate ?? '' })) }}
-          className="flex items-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 px-4 py-2.5 text-sm font-semibold text-white transition-all">
+          className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2.5 text-sm font-semibold text-white transition-all">
           <Plus className="h-4 w-4" /> Schedule Match
         </button>
       </div>
@@ -125,14 +125,14 @@ export default function MatchCalendar() {
               return (
                 <button key={i} onClick={() => setSelectedDate(isSelected ? null : dateStr)}
                   className={`relative flex flex-col items-center rounded-lg py-2 px-1 transition-all ${
-                    isSelected ? 'bg-green-600 text-white' :
-                    isToday ? 'bg-green-600/15 border border-green-600/40 text-green-400' :
+                    isSelected ? 'bg-pitch-600 text-white' :
+                    isToday ? 'bg-pitch-600/15 border border-pitch-600/40 text-pitch-400' :
                     'text-slate-400 hover:bg-slate-800 hover:text-white'
                   }`}>
                   <span className="text-sm font-medium">{day}</span>
                   {hasEvents && (
                     <div className="flex gap-0.5 mt-1">
-                      {played.length > 0 && <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-green-500'}`} />}
+                      {played.length > 0 && <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-pitch-500'}`} />}
                       {sched.length > 0 && <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-400'}`} />}
                     </div>
                   )}
@@ -143,7 +143,7 @@ export default function MatchCalendar() {
 
           {/* Legend */}
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-800">
-            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-green-500" /><span className="text-xs text-slate-500">Played</span></div>
+            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-pitch-500" /><span className="text-xs text-slate-500">Played</span></div>
             <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-400" /><span className="text-xs text-slate-500">Scheduled</span></div>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function MatchCalendar() {
                       <p className="text-xs text-slate-500">{m.competition} · {m.venue}</p>
                     </div>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                      m.result === 'win' ? 'bg-green-600/20 text-green-400' :
+                      m.result === 'win' ? 'bg-pitch-600/20 text-pitch-400' :
                       m.result === 'draw' ? 'bg-yellow-600/20 text-yellow-400' :
                       'bg-red-600/20 text-red-400'
                     }`}>{m.result === 'win' ? 'W' : m.result === 'draw' ? 'D' : 'L'}</span>
@@ -198,7 +198,7 @@ export default function MatchCalendar() {
                   <Calendar className="h-6 w-6 text-slate-700 mx-auto mb-2" />
                   <p className="text-xs text-slate-600">No matches on this day</p>
                   <button onClick={() => { setShowForm(true); setForm(f => ({ ...f, date: selectedDate })) }}
-                    className="mt-3 text-xs text-green-500 hover:text-green-400 transition-colors">
+                    className="mt-3 text-xs text-pitch-500 hover:text-pitch-400 transition-colors">
                     + Schedule a match
                   </button>
                 </div>
@@ -257,7 +257,7 @@ export default function MatchCalendar() {
                 <input type={type} placeholder={placeholder}
                   value={(form as Record<string, string>)[key]}
                   onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-green-500 transition-colors" />
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-pitch-500 transition-colors" />
               </div>
             ))}
 
@@ -267,7 +267,7 @@ export default function MatchCalendar() {
                 {(['home', 'away', 'neutral'] as const).map(v => (
                   <button key={v} onClick={() => setForm(f => ({ ...f, venue: v }))}
                     className={`flex-1 rounded-xl py-2 text-sm font-medium capitalize transition-all ${
-                      form.venue === v ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                      form.venue === v ? 'bg-pitch-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
                     }`}>{v}</button>
                 ))}
               </div>
@@ -278,7 +278,7 @@ export default function MatchCalendar() {
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Preparation notes, travel info..."
                 rows={2}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-green-500 transition-colors resize-none" />
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-pitch-500 transition-colors resize-none" />
             </div>
 
             <div className="flex gap-2 pt-1">
@@ -287,7 +287,7 @@ export default function MatchCalendar() {
                 Cancel
               </button>
               <button onClick={addMatch} disabled={!form.opponent || !form.date}
-                className="flex-1 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-40 py-2.5 text-sm font-semibold text-white transition-all">
+                className="flex-1 rounded-xl bg-pitch-600 hover:bg-pitch-500 disabled:opacity-40 py-2.5 text-sm font-semibold text-white transition-all">
                 Schedule
               </button>
             </div>

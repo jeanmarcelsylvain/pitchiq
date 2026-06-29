@@ -260,7 +260,7 @@ export default function Matches() {
                   {/* Stats grid */}
                   <div className="grid grid-cols-4 gap-4 sm:gap-6 text-center flex-shrink-0">
                     <div>
-                      <p className="text-lg font-bold text-emerald-400">{match.goals}</p>
+                      <p className="text-lg font-bold text-pitch-400">{match.goals}</p>
                       <p className="text-xs text-slate-600">Goals</p>
                     </div>
                     <div>

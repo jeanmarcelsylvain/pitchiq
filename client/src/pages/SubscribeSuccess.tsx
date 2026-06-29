@@ -35,7 +35,7 @@ export default function SubscribeSuccess() {
   if (status === 'loading') return (
     <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="text-center space-y-4">
-        <Loader className="h-8 w-8 animate-spin text-green-500 mx-auto" />
+        <Loader className="h-8 w-8 animate-spin text-pitch-500 mx-auto" />
         <p className="text-slate-400 text-sm">Activating your Pro account…</p>
       </div>
     </div>
@@ -58,8 +58,8 @@ export default function SubscribeSuccess() {
     <div className="flex h-screen items-center justify-center bg-slate-950 p-4">
       <div className="max-w-md w-full text-center space-y-6">
         {/* Success animation */}
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-600/20 border-2 border-green-500/40 mx-auto">
-          <CheckCircle className="h-10 w-10 text-green-400" />
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-pitch-600/20 border-2 border-pitch-500/40 mx-auto">
+          <CheckCircle className="h-10 w-10 text-pitch-400" />
         </div>
 
         <div>
@@ -84,7 +84,7 @@ export default function SubscribeSuccess() {
         </div>
 
         <button onClick={() => navigate('/ai-coach')}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 py-3.5 text-sm font-semibold text-white transition-all shadow-lg shadow-green-900/30">
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 py-3.5 text-sm font-semibold text-white transition-all shadow-lg shadow-pitch-900/30">
           <Sparkles className="h-4 w-4" />
           Start with AI Coach
           <ArrowRight className="h-4 w-4" />

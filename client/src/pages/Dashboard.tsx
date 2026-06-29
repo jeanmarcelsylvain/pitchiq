@@ -10,7 +10,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useNavigate } from 'react-router-dom'
 
 const insightTypeConfig = {
-  improvement: { color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
+  improvement: { color: 'text-pitch-400', bg: 'bg-pitch-500/10 border-pitch-500/20', dot: 'bg-pitch-400' },
   warning: { color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', dot: 'bg-yellow-400' },
   achievement: { color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', dot: 'bg-purple-400' },
   trend: { color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', dot: 'bg-blue-400' },
@@ -118,14 +118,14 @@ export default function Dashboard() {
             <CardContent className="pt-4">
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={ratingData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[4, 10]} tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" />
+                  <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[4, 10]} tick={{ fill: '#5c4888', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', color: '#e2e8f0', fontSize: '12px' }}
-                    cursor={{ stroke: '#334155' }}
+                    contentStyle={{ background: '#120c22', border: '1px solid #1d1530', borderRadius: '8px', color: '#e0d5f0', fontSize: '12px' }}
+                    cursor={{ stroke: '#3c3050' }}
                   />
-                  <Line type="monotone" dataKey="rating" stroke="#22c55e" strokeWidth={2.5} dot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="rating" stroke="#ff5a3c" strokeWidth={2.5} dot={{ r: 4, fill: '#ff5a3c', strokeWidth: 0 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>

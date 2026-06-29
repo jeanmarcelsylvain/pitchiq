@@ -31,7 +31,7 @@ function PLAN_KEY(uid: string) { return `training_plan_v2_${uid}` }
 
 const INTENSITY_STYLES: Record<DayPlan['intensity'], { badge: string; bar: string; icon: React.ReactNode }> = {
   Rest:   { badge: 'text-slate-400 bg-slate-800 border-slate-700', bar: 'bg-slate-600', icon: <Moon className="h-4 w-4 text-slate-400" /> },
-  Low:    { badge: 'text-green-400 bg-green-400/10 border-green-400/20', bar: 'bg-green-500', icon: <Dumbbell className="h-4 w-4 text-green-400" /> },
+  Low:    { badge: 'text-pitch-400 bg-pitch-400/10 border-pitch-400/20', bar: 'bg-pitch-500', icon: <Dumbbell className="h-4 w-4 text-pitch-400" /> },
   Medium: { badge: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20', bar: 'bg-yellow-500', icon: <Dumbbell className="h-4 w-4 text-yellow-400" /> },
   High:   { badge: 'text-red-400 bg-red-400/10 border-red-400/20', bar: 'bg-red-500', icon: <Zap className="h-4 w-4 text-red-400" /> },
 }
@@ -249,7 +249,7 @@ export default function TrainingPlan() {
         {savedPlan && (
           <button onClick={savePlan}
             className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-all">
-            {saved ? <><Check className="h-4 w-4 text-green-400" /> Saved</> : <><Save className="h-4 w-4" /> Save Plan</>}
+            {saved ? <><Check className="h-4 w-4 text-pitch-400" /> Saved</> : <><Save className="h-4 w-4" /> Save Plan</>}
           </button>
         )}
       </div>
@@ -265,7 +265,7 @@ export default function TrainingPlan() {
               {[3, 4, 5, 6, 7].map(d => (
                 <button key={d} onClick={() => setDaysPerWeek(d)}
                   className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                    daysPerWeek === d ? 'bg-green-600 text-white shadow-lg shadow-green-900/30' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                    daysPerWeek === d ? 'bg-pitch-600 text-white shadow-lg shadow-pitch-900/30' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
                   }`}>{d}</button>
               ))}
             </div>
@@ -277,7 +277,7 @@ export default function TrainingPlan() {
               {([30, 45, 60, 90] as const).map(l => (
                 <button key={l} onClick={() => setSessionLength(l)}
                   className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                    sessionLength === l ? 'bg-green-600 text-white shadow-lg shadow-green-900/30' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                    sessionLength === l ? 'bg-pitch-600 text-white shadow-lg shadow-pitch-900/30' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
                   }`}>{l}m</button>
               ))}
             </div>
@@ -295,7 +295,7 @@ export default function TrainingPlan() {
               )}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   selectedFocus.includes(f)
-                    ? 'bg-green-600 text-white shadow shadow-green-900/30'
+                    ? 'bg-pitch-600 text-white shadow shadow-pitch-900/30'
                     : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700 hover:border-slate-600'
                 }`}>{f}</button>
             ))}
@@ -318,7 +318,7 @@ export default function TrainingPlan() {
         </div>
 
         <button onClick={generatePlan} disabled={generating}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-60 py-3.5 text-sm font-semibold text-white transition-all shadow-lg shadow-green-900/20">
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 disabled:opacity-60 py-3.5 text-sm font-semibold text-white transition-all shadow-lg shadow-pitch-900/20">
           {generating
             ? <><RefreshCw className="h-4 w-4 animate-spin" /> Building your plan…</>
             : <><Sparkles className="h-4 w-4" /> Generate 7-Day Training Plan</>
@@ -334,7 +334,7 @@ export default function TrainingPlan() {
             <span className="text-xs text-slate-500">{Math.round(progress)}%</span>
           </div>
           <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-            <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-pitch-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
           {streamText && (
             <div ref={streamRef} className="max-h-48 overflow-y-auto rounded-xl bg-slate-950 p-3">
@@ -372,7 +372,7 @@ export default function TrainingPlan() {
                 <button key={dayName}
                   onClick={() => setExpandedDay(expandedDay === dayName ? null : dayName)}
                   className={`flex flex-col items-center gap-1.5 rounded-xl border p-2 transition-all ${
-                    expandedDay === dayName ? 'border-green-500/50 bg-green-600/10' : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+                    expandedDay === dayName ? 'border-pitch-500/50 bg-pitch-600/10' : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
                   }`}>
                   <span className="text-xs font-semibold text-slate-500">{dayName.slice(0,3)}</span>
                   {style.icon}
@@ -435,7 +435,7 @@ export default function TrainingPlan() {
 
                       {day.mainDrills.length > 0 && (
                         <div>
-                          <p className="text-xs font-bold text-green-400 uppercase tracking-wider mb-3">⚽ Main Session</p>
+                          <p className="text-xs font-bold text-pitch-400 uppercase tracking-wider mb-3">⚽ Main Session</p>
                           <div className="space-y-3">
                             {day.mainDrills.map((drill, i) => {
                               // Split "Drill Name — description" for styling
@@ -444,7 +444,7 @@ export default function TrainingPlan() {
                               const drillDesc = dashIdx > -1 ? drill.slice(dashIdx + 3) : ''
                               return (
                                 <div key={i} className="flex gap-3 rounded-xl border border-slate-800 bg-slate-800/30 p-3">
-                                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-600/20 text-xs font-bold text-green-400">{i + 1}</span>
+                                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-pitch-600/20 text-xs font-bold text-pitch-400">{i + 1}</span>
                                   <div>
                                     <p className="text-sm font-semibold text-white">{drillName}</p>
                                     {drillDesc && <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{drillDesc}</p>}
@@ -471,8 +471,8 @@ export default function TrainingPlan() {
                       )}
 
                       {day.coachNote && (
-                        <div className="rounded-xl border border-green-600/20 bg-green-600/5 px-4 py-3">
-                          <p className="text-xs font-bold text-green-400 mb-1">Coach Marcos says:</p>
+                        <div className="rounded-xl border border-pitch-600/20 bg-pitch-600/5 px-4 py-3">
+                          <p className="text-xs font-bold text-pitch-400 mb-1">Coach Marcos says:</p>
                           <p className="text-sm text-slate-300 italic">"{day.coachNote}"</p>
                         </div>
                       )}
@@ -493,7 +493,7 @@ export default function TrainingPlan() {
           <p className="text-slate-400 font-medium">No training plan generated yet</p>
           <p className="text-slate-600 text-sm mt-1 mb-5">Customize your week above and hit Generate</p>
           <button onClick={generatePlan}
-            className="flex items-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 px-5 py-2.5 text-sm font-semibold text-white transition-all">
+            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-5 py-2.5 text-sm font-semibold text-white transition-all">
             <Sparkles className="h-4 w-4" /> Generate My Plan
           </button>
         </div>

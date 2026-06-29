@@ -95,7 +95,7 @@ export default function SeasonArchive() {
         </div>
         {matches.length > 0 && (
           <button onClick={() => setShowArchiveForm(true)}
-            className="flex items-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 px-4 py-2.5 text-sm font-semibold text-white transition-all">
+            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2.5 text-sm font-semibold text-white transition-all">
             <Archive className="h-4 w-4" /> Archive Current Season
           </button>
         )}
@@ -104,7 +104,7 @@ export default function SeasonArchive() {
       {/* Current Season Summary */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="h-2 w-2 rounded-full bg-pitch-500 animate-pulse" />
           <p className="text-sm font-semibold text-white">Current Season</p>
         </div>
         {matches.length === 0 ? (
@@ -160,7 +160,7 @@ export default function SeasonArchive() {
                 <div className="flex items-center gap-4">
                   <div className="hidden sm:flex items-center gap-4 text-sm">
                     <span className="text-white font-bold">{season.matches.length}<span className="text-slate-500 font-normal text-xs ml-1">games</span></span>
-                    <span className="text-green-400 font-bold">{season.goals}G</span>
+                    <span className="text-pitch-400 font-bold">{season.goals}G</span>
                     <span className="text-blue-400 font-bold">{season.assists}A</span>
                     <span className="text-slate-400 text-xs">{winRate(season)}% wins</span>
                   </div>
@@ -232,7 +232,7 @@ export default function SeasonArchive() {
             <div>
               <label className="text-xs text-slate-500 mb-1 block">Season Name</label>
               <input value={seasonName} onChange={e => setSeasonName(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-white outline-none focus:border-green-500 transition-colors" />
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-white outline-none focus:border-pitch-500 transition-colors" />
             </div>
 
             <div>
@@ -240,7 +240,7 @@ export default function SeasonArchive() {
               <textarea value={highlights} onChange={e => setHighlights(e.target.value)}
                 placeholder="Best moment, personal achievements, what you learned..."
                 rows={3}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-green-500 transition-colors resize-none" />
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-pitch-500 transition-colors resize-none" />
             </div>
 
             {!confirming ? (

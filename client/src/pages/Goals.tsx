@@ -10,7 +10,7 @@ import { useApi } from '@/hooks/useApi'
 import type { Goal } from '@/types'
 
 const categoryConfig = {
-  scoring: { label: 'Scoring', color: 'green' as const, bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  scoring: { label: 'Scoring', color: 'green' as const, bg: 'bg-pitch-500/10 border-pitch-500/20' },
   passing: { label: 'Passing', color: 'blue' as const, bg: 'bg-blue-500/10 border-blue-500/20' },
   fitness: { label: 'Fitness', color: 'yellow' as const, bg: 'bg-yellow-500/10 border-yellow-500/20' },
   minutes: { label: 'Minutes', color: 'purple' as const, bg: 'bg-purple-500/10 border-purple-500/20' },
@@ -196,7 +196,7 @@ export default function Goals() {
                     <button
                       onClick={() => markComplete(goal.id)}
                       title="Mark complete"
-                      className="flex-shrink-0 text-slate-600 hover:text-emerald-400 transition-colors"
+                      className="flex-shrink-0 text-slate-600 hover:text-pitch-400 transition-colors"
                     >
                       <CheckCircle2 className="h-5 w-5" />
                     </button>
@@ -228,7 +228,7 @@ export default function Goals() {
           <div className="space-y-2">
             {completed.map(goal => (
               <div key={goal.id} className="flex items-center gap-3 rounded-xl border border-slate-800/50 bg-slate-900/30 px-4 py-3 opacity-60">
-                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-pitch-400" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-300 line-through">{goal.title}</p>
                 </div>

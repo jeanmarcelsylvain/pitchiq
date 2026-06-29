@@ -124,8 +124,8 @@ export default function Profile() {
             <CardHeader><CardTitle>Match Record</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4">
-                  <p className="text-3xl font-black text-emerald-400">{wins}</p>
+                <div className="rounded-lg bg-pitch-500/10 border border-pitch-500/20 p-4">
+                  <p className="text-3xl font-black text-pitch-400">{wins}</p>
                   <p className="text-xs text-slate-500 mt-1">Wins</p>
                 </div>
                 <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4">
@@ -145,7 +145,7 @@ export default function Profile() {
                   </div>
                   <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500"
+                      className="h-full rounded-full bg-gradient-to-r from-pitch-600 to-pitch-500"
                       style={{ width: `${winRate}%` }}
                     />
                   </div>
@@ -167,9 +167,9 @@ export default function Profile() {
                 <>
                   <ResponsiveContainer width="100%" height={200}>
                     <RadarChart data={radarData}>
-                      <PolarGrid stroke="#1e293b" />
-                      <PolarAngleAxis dataKey="metric" tick={{ fill: '#64748b', fontSize: 11 }} />
-                      <Radar name="Player" dataKey="value" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} strokeWidth={2} />
+                      <PolarGrid stroke="#1d1530" />
+                      <PolarAngleAxis dataKey="metric" tick={{ fill: '#5c4888', fontSize: 11 }} />
+                      <Radar name="Player" dataKey="value" stroke="#ff5a3c" fill="#ff5a3c" fillOpacity={0.15} strokeWidth={2} />
                     </RadarChart>
                   </ResponsiveContainer>
                   <div className="mt-2 grid grid-cols-3 gap-2">

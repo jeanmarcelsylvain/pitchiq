@@ -13,7 +13,7 @@ import { BarChart2, Plus } from 'lucide-react'
 type MetricKey = 'goals' | 'assists' | 'passAcc' | 'rating' | 'speed' | 'distance'
 
 const metrics: { key: MetricKey; label: string; color: string }[] = [
-  { key: 'goals', label: 'Goals', color: '#22c55e' },
+  { key: 'goals', label: 'Goals', color: '#ff5a3c' },
   { key: 'assists', label: 'Assists', color: '#3b82f6' },
   { key: 'passAcc', label: 'Pass Accuracy', color: '#a855f7' },
   { key: 'rating', label: 'Performance Rating', color: '#f59e0b' },
@@ -124,9 +124,9 @@ export default function Analytics() {
                   <stop offset="95%" stopColor={selected.color} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" />
+              <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#5c4888', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip content={<TooltipContent />} />
               <Area
                 type="monotone"
@@ -151,12 +151,12 @@ export default function Analytics() {
           <CardContent className="pt-2">
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
                 <Tooltip content={<TooltipContent />} />
                 <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
-                <Bar dataKey="goals" name="Goals" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="goals" name="Goals" fill="#ff5a3c" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="assists" name="Assists" fill="#3b82f6" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -169,9 +169,9 @@ export default function Analytics() {
           <CardContent className="pt-2 flex items-center justify-center">
             <ResponsiveContainer width="100%" height={220}>
               <RadarChart data={radarData}>
-                <PolarGrid stroke="#1e293b" />
+                <PolarGrid stroke="#1d1530" />
                 <PolarAngleAxis dataKey="metric" tick={{ fill: '#64748b', fontSize: 11 }} />
-                <Radar name="Player" dataKey="value" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} strokeWidth={2} />
+                <Radar name="Player" dataKey="value" stroke="#ff5a3c" fill="#ff5a3c" fillOpacity={0.15} strokeWidth={2} />
                 <Tooltip content={<TooltipContent />} />
               </RadarChart>
             </ResponsiveContainer>
@@ -184,12 +184,12 @@ export default function Analytics() {
           <CardContent className="pt-2">
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[50, 100]} tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" />
+                <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[50, 100]} tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<TooltipContent />} />
                 <Line type="monotone" dataKey="passAcc" name="Pass Acc %" stroke="#a855f7" strokeWidth={2.5} dot={{ r: 3, fill: '#a855f7', strokeWidth: 0 }} />
-                <Line type="monotone" dataKey={() => 85} stroke="#475569" strokeWidth={1} strokeDasharray="4 4" dot={false} name="Target (85%)" />
+                <Line type="monotone" dataKey={() => 85} stroke="#3c3050" strokeWidth={1} strokeDasharray="4 4" dot={false} name="Target (85%)" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -207,9 +207,9 @@ export default function Analytics() {
                     <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" />
+                <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<TooltipContent />} />
                 <Area type="monotone" dataKey="speed" name="Speed (km/h)" stroke="#ec4899" fill="url(#speedGrad)" strokeWidth={2.5} dot={{ r: 3, fill: '#ec4899', strokeWidth: 0 }} />
               </AreaChart>
@@ -237,19 +237,19 @@ export default function Analytics() {
                     <td className="px-4 py-3 text-xs text-slate-500">{m.date.slice(5)}</td>
                     <td className="px-4 py-3 text-slate-200 font-medium">{m.opponent}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs font-bold ${m.result === 'win' ? 'text-emerald-400' : m.result === 'loss' ? 'text-red-400' : 'text-yellow-400'}`}>
+                      <span className={`text-xs font-bold ${m.result === 'win' ? 'text-pitch-400' : m.result === 'loss' ? 'text-red-400' : 'text-yellow-400'}`}>
                         {m.result?.toUpperCase()}
                         {m.teamScore !== undefined && ` ${m.teamScore}–${m.opponentScore}`}
                       </span>
                     </td>
                     <td className="px-4 py-3"><span className="text-xs text-slate-400 font-mono">{m.position}</span></td>
                     <td className="px-4 py-3 text-slate-300">{m.minutesPlayed}'</td>
-                    <td className="px-4 py-3 text-emerald-400 font-semibold">{m.goals}</td>
+                    <td className="px-4 py-3 text-pitch-400 font-semibold">{m.goals}</td>
                     <td className="px-4 py-3 text-blue-400 font-semibold">{m.assists}</td>
                     <td className="px-4 py-3 text-slate-300">{m.passAccuracy}%</td>
                     <td className="px-4 py-3 text-slate-300">{m.sprintSpeed} km/h</td>
                     <td className="px-4 py-3">
-                      <span className={`font-bold ${m.rating >= 8 ? 'text-emerald-400' : m.rating >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
+                      <span className={`font-bold ${m.rating >= 8 ? 'text-pitch-400' : m.rating >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
                         {m.rating.toFixed(1)}
                       </span>
                     </td>
