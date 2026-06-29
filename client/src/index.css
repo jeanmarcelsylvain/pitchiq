@@ -12,22 +12,22 @@
     -moz-osx-font-smoothing: grayscale;
     /* subtle pitch-grid texture */
     background-image:
-      linear-gradient(rgba(0, 200, 83, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 200, 83, 0.025) 1px, transparent 1px);
+      linear-gradient(rgba(255, 90, 60, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 90, 60, 0.025) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: #020b14; }
-  ::-webkit-scrollbar-thumb { background: #0d2240; border-radius: 9999px; }
-  ::-webkit-scrollbar-thumb:hover { background: #133060; }
+  ::-webkit-scrollbar-track { background: #0d0818; }
+  ::-webkit-scrollbar-thumb { background: #1d1530; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2a1e4c; }
 
   input[type='date']::-webkit-calendar-picker-indicator { filter: invert(0.4); }
 }
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, #00e676 0%, #00a844 100%);
+    background: linear-gradient(135deg, #ff7a60 0%, #e03c20 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
@@ -49,17 +49,17 @@
       -55deg,
       transparent,
       transparent 18px,
-      rgba(0, 200, 83, 0.018) 18px,
-      rgba(0, 200, 83, 0.018) 19px
+      rgba(255, 90, 60, 0.018) 18px,
+      rgba(255, 90, 60, 0.018) 19px
     );
   }
 
   /* Neon glow on active/primary */
-  .glow-green { box-shadow: 0 0 18px rgba(0, 200, 83, 0.4); }
-  .glow-green-sm { box-shadow: 0 0 10px rgba(0, 200, 83, 0.25); }
+  .glow-green { box-shadow: 0 0 18px rgba(255, 90, 60, 0.4); }
+  .glow-green-sm { box-shadow: 0 0 10px rgba(255, 90, 60, 0.25); }
 
   /* Glowing progress fill */
-  .progress-glow { box-shadow: 0 0 8px rgba(0, 200, 83, 0.5), 0 0 2px rgba(0, 230, 118, 0.8); }
+  .progress-glow { box-shadow: 0 0 8px rgba(255, 90, 60, 0.5), 0 0 2px rgba(255, 122, 96, 0.8); }
   .progress-glow-blue { box-shadow: 0 0 8px rgba(64, 196, 255, 0.5); }
   .progress-glow-amber { box-shadow: 0 0 8px rgba(255, 186, 8, 0.5); }
 
@@ -74,8 +74,8 @@
 html.light body {
   background-color: #f0f4f8 !important;
   background-image:
-    linear-gradient(rgba(0, 168, 68, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 168, 68, 0.05) 1px, transparent 1px) !important;
+    linear-gradient(rgba(255, 90, 60, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 90, 60, 0.05) 1px, transparent 1px) !important;
   background-size: 48px 48px !important;
   color: #1a2e40 !important;
 }
@@ -107,4 +107,4 @@ html.light ::-webkit-scrollbar-track { background: #f0f4f8 !important; }
 html.light ::-webkit-scrollbar-thumb { background: #b8cfe0 !important; }
 
 html.light input[type='date']::-webkit-calendar-picker-indicator { filter: none !important; }
-html.light .sidebar-texture { background-image: repeating-linear-gradient(-55deg, transparent, transparent 18px, rgba(0,168,68,0.04) 18px, rgba(0,168,68,0.04) 19px) !important; }
+html.light .sidebar-texture { background-image: repeating-linear-gradient(-55deg, transparent, transparent 18px, rgba(255,90,60,0.04) 18px, rgba(255,90,60,0.04) 19px) !important; }
