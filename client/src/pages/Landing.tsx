@@ -6,11 +6,13 @@ import { X, ArrowUpRight, Check } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 /* ─── Constants ───────────────────────────────────────────────────────────── */
-const LIME   = '#c2ff00'
+const LIME   = '#d4ff00'
 const BLACK  = '#080808'
-const CREAM  = '#f0ebe0'
-const GRAY   = '#1c1c1c'
-const BORDER = '#2a2a2a'
+const CREAM  = '#f5f2ea'
+const GRAY   = '#111111'
+const BORDER = '#2e2e2e'
+const DIM    = '#c0bdb5'   // bright secondary text
+const MUTED  = '#888880'   // tertiary text
 
 const BC = { fontFamily: '"Barlow Condensed", sans-serif' }
 const B  = { fontFamily: '"Barlow", sans-serif' }
@@ -76,10 +78,10 @@ function Modal({ onClose, onSignIn, loading }: { onClose: () => void; onSignIn: 
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-8">
           <span style={{ ...BC, fontSize: '1.25rem', fontWeight: 700, letterSpacing: '0.05em', color: CREAM }}>PITCHIQ</span>
-          <button onClick={onClose} style={{ color: '#555' }} className="hover:text-white transition-colors"><X size={18}/></button>
+          <button onClick={onClose} style={{ color: MUTED }} className="hover:text-white transition-colors"><X size={18}/></button>
         </div>
         <p style={{ ...BC, fontSize: '1.75rem', fontWeight: 700, color: CREAM, letterSpacing: '0.02em' }} className="mb-2">SIGN IN</p>
-        <p style={{ ...B, color: '#666', fontSize: '0.875rem' }} className="mb-8">Pick up right where you left off.</p>
+        <p style={{ ...B, color: MUTED, fontSize: '0.875rem' }} className="mb-8">Pick up right where you left off.</p>
         <button onClick={onSignIn} disabled={loading}
           className="w-full flex items-center justify-center gap-3 py-3.5 text-sm font-semibold disabled:opacity-50"
           style={{ ...B, background: CREAM, color: BLACK, border: 'none' }}>
@@ -87,7 +89,7 @@ function Modal({ onClose, onSignIn, loading }: { onClose: () => void; onSignIn: 
           {loading ? 'Signing in…' : 'Continue with Google'}
         </button>
         <button onClick={onClose} className="w-full mt-3 py-3 text-sm"
-          style={{ ...B, color: '#555', border: `1px solid ${BORDER}`, background: 'transparent' }}>
+          style={{ ...B, color: MUTED, border: `1px solid ${BORDER}`, background: 'transparent' }}>
           New? Create account instead
         </button>
       </motion.div>
@@ -124,7 +126,7 @@ export default function Landing() {
         style={{ background: scrolled ? 'rgba(8,8,8,0.96)' : 'transparent', borderBottom: scrolled ? `1px solid ${BORDER}` : 'none', backdropFilter: scrolled ? 'blur(12px)' : 'none', transition: 'all 0.3s' }}>
         <span style={{ ...BC, fontWeight: 700, fontSize: '1rem', letterSpacing: '0.1em', color: CREAM }}>PITCHIQ</span>
         <div className="flex items-center gap-2">
-          <button onClick={demo} style={{ ...B, color: '#666', fontSize: '0.8rem' }} className="hidden sm:block hover:text-white transition-colors px-3 py-1.5">
+          <button onClick={demo} style={{ ...B, color: MUTED, fontSize: '0.8rem' }} className="hidden sm:block hover:text-white transition-colors px-3 py-1.5">
             Try Demo
           </button>
           <button onClick={() => setModal(true)} style={{ ...B, fontSize: '0.8rem', color: CREAM, border: `1px solid ${BORDER}`, padding: '6px 14px', background: 'transparent' }}
@@ -143,7 +145,7 @@ export default function Landing() {
         {/* Big decorative number behind */}
         <motion.div style={{ y: heroY, opacity: heroO }}
           className="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none select-none overflow-hidden">
-          <span style={{ ...BC, fontSize: 'clamp(220px, 40vw, 480px)', fontWeight: 800, color: '#111', lineHeight: 1, letterSpacing: '-0.04em', userSelect: 'none' }}>
+          <span style={{ ...BC, fontSize: 'clamp(220px, 40vw, 480px)', fontWeight: 800, color: '#1a1a1a', lineHeight: 1, letterSpacing: '-0.04em', userSelect: 'none' }}>
             IQ
           </span>
         </motion.div>
@@ -153,7 +155,7 @@ export default function Landing() {
           style={{ height: 2, background: LIME, transformOrigin: 'left', marginBottom: '2rem', maxWidth: 120 }} />
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
-          <p style={{ ...BC, fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.22em', color: '#666' }} className="mb-6 uppercase">
+          <p style={{ ...BC, fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.22em', color: MUTED }} className="mb-6 uppercase">
             Soccer Performance Analytics · Ages 14–22
           </p>
         </motion.div>
@@ -177,14 +179,14 @@ export default function Landing() {
             <ArrowUpRight size={14} />
           </motion.button>
           <motion.button onClick={demo}
-            style={{ ...BC, fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.08em', background: 'transparent', color: '#888', padding: '14px 28px', border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8 }}
+            style={{ ...BC, fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.08em', background: 'transparent', color: DIM, padding: '14px 28px', border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8 }}
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
             whileHover={{ borderColor: '#555', color: CREAM }} className="transition-colors">
             VIEW DEMO
           </motion.button>
         </div>
 
-        <motion.p style={{ ...B, color: '#444', fontSize: '0.75rem', marginTop: '1.5rem' }}
+        <motion.p style={{ ...B, color: MUTED, fontSize: '0.75rem', marginTop: '1.5rem' }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
           Free forever · AI from $4.99/mo · No credit card
         </motion.p>
@@ -203,7 +205,7 @@ export default function Landing() {
               <div style={{ ...BC, fontSize: '2.5rem', fontWeight: 800, color: CREAM, letterSpacing: '-0.03em', lineHeight: 1 }}>
                 <Counter to={n} suffix={s} />
               </div>
-              <div style={{ ...B, fontSize: '0.7rem', color: '#555', marginTop: '0.25rem' }}>{l}</div>
+              <div style={{ ...B, fontSize: '0.7rem', color: MUTED, marginTop: '0.25rem' }}>{l}</div>
             </div>
           ))}
         </motion.div>
@@ -227,7 +229,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-end">
           <div>
             <Reveal>
-              <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: '#444' }} className="mb-5 uppercase">01 / The Platform</p>
+              <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: MUTED }} className="mb-5 uppercase">01 / The Platform</p>
             </Reveal>
             <Reveal delay={0.05}>
               <h2 style={{ ...BC, fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 0.92, color: CREAM }}>
@@ -239,7 +241,7 @@ export default function Landing() {
           </div>
           <div>
             <Reveal delay={0.1}>
-              <p style={{ ...B, color: '#888', fontSize: '1.05rem', lineHeight: 1.7 }}>
+              <p style={{ ...B, color: DIM, fontSize: '1.05rem', lineHeight: 1.7 }}>
                 PitchIQ gives competitive youth soccer players — ECNL, club, high school — the same performance tracking infrastructure used at the pro level. Log every match. See every trend. Know exactly what to fix.
               </p>
               <div className="mt-8 flex gap-6">
@@ -247,7 +249,7 @@ export default function Landing() {
                   className="hover:bg-lime-500/10 transition-colors">
                   START FREE →
                 </button>
-                <button onClick={demo} style={{ ...B, fontSize: '0.8rem', color: '#555', textDecoration: 'underline', background: 'none', border: 'none' }}
+                <button onClick={demo} style={{ ...B, fontSize: '0.8rem', color: MUTED, textDecoration: 'underline', background: 'none', border: 'none' }}
                   className="hover:text-white transition-colors">
                   See demo
                 </button>
@@ -261,7 +263,7 @@ export default function Landing() {
       <section style={{ background: GRAY, borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28 overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: '#444' }} className="mb-16 uppercase">02 / Match Logging</p>
+            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: MUTED }} className="mb-16 uppercase">02 / Match Logging</p>
           </Reveal>
 
           {/* Big layout: number left, list right */}
@@ -270,7 +272,7 @@ export default function Landing() {
               <div style={{ ...BC, fontSize: 'clamp(7rem,18vw,14rem)', fontWeight: 900, color: LIME, lineHeight: 1, letterSpacing: '-0.05em' }}>
                 14
               </div>
-              <p style={{ ...B, color: '#666', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+              <p style={{ ...B, color: MUTED, fontSize: '0.875rem', marginTop: '0.5rem' }}>
                 metrics captured per match
               </p>
             </Reveal>
@@ -284,11 +286,11 @@ export default function Landing() {
                   {['Goals', 'Assists', 'Pass Accuracy', 'Sprint Speed', 'Distance', 'Match Rating', 'Position', 'Minutes', 'Shots on Target', 'Duels Won', 'Competition', 'Result'].map(m => (
                     <div key={m} className="flex items-center gap-2">
                       <div style={{ width: 4, height: 4, background: LIME, borderRadius: 0, flexShrink: 0 }} />
-                      <span style={{ ...B, color: '#888', fontSize: '0.8rem' }}>{m}</span>
+                      <span style={{ ...B, color: DIM, fontSize: '0.8rem' }}>{m}</span>
                     </div>
                   ))}
                 </div>
-                <p style={{ ...B, color: '#555', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+                <p style={{ ...B, color: MUTED, fontSize: '0.75rem', marginTop: '1.5rem' }}>
                   Log a full match in under 60 seconds.
                 </p>
               </div>
@@ -301,7 +303,7 @@ export default function Landing() {
       <section style={{ borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: '#444' }} className="mb-16 uppercase">03 / Analytics</p>
+            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: MUTED }} className="mb-16 uppercase">03 / Analytics</p>
           </Reveal>
 
           <div className="grid lg:grid-cols-[1.2fr_1fr] gap-16 items-center">
@@ -309,7 +311,7 @@ export default function Landing() {
             <Reveal>
               <div style={{ border: `1px solid ${BORDER}`, background: GRAY, padding: '2rem' }}>
                 <div className="flex items-center justify-between mb-6">
-                  <span style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.16em', color: '#555' }}>RATING TREND — SEASON 2025</span>
+                  <span style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.16em', color: MUTED }}>RATING TREND — SEASON 2025</span>
                   <span style={{ ...MONO, fontSize: '0.7rem', color: LIME }}>↑ 18%</span>
                 </div>
                 <svg viewBox="0 0 320 120" className="w-full" xmlns="http://www.w3.org/2000/svg">
@@ -332,7 +334,7 @@ export default function Landing() {
                 </svg>
                 <div className="flex justify-between mt-3">
                   {['AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR','APR'].map(m => (
-                    <span key={m} style={{ ...BC, fontSize: '0.6rem', color: '#444' }}>{m}</span>
+                    <span key={m} style={{ ...BC, fontSize: '0.6rem', color: MUTED }}>{m}</span>
                   ))}
                 </div>
               </div>
@@ -344,14 +346,14 @@ export default function Landing() {
                 BEFORE YOUR<br />
                 COACH DOES.
               </h2>
-              <p style={{ ...B, color: '#666', lineHeight: 1.7, fontSize: '0.95rem' }}>
+              <p style={{ ...B, color: MUTED, lineHeight: 1.7, fontSize: '0.95rem' }}>
                 Interactive charts surface performance patterns across your entire season. Compare form across positions, identify training load correlations, and spot your peak windows.
               </p>
               <div className="mt-8 grid grid-cols-2 gap-4">
                 {[['Rating Trend', 'by match'], ['Pass Accuracy', 'over time'], ['Goals/Assists', 'ratio'], ['Sprint Speed', 'progression']].map(([a, b]) => (
                   <div key={a} style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '0.75rem' }}>
                     <div style={{ ...BC, fontSize: '0.8rem', fontWeight: 700, color: CREAM }}>{a}</div>
-                    <div style={{ ...B, fontSize: '0.7rem', color: '#555' }}>{b}</div>
+                    <div style={{ ...B, fontSize: '0.7rem', color: MUTED }}>{b}</div>
                   </div>
                 ))}
               </div>
@@ -364,7 +366,7 @@ export default function Landing() {
       <section style={{ background: GRAY, borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: '#444' }} className="mb-16 uppercase">04 / AI Tools · Pro</p>
+            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: MUTED }} className="mb-16 uppercase">04 / AI Tools · Pro</p>
           </Reveal>
 
           <div className="grid lg:grid-cols-2 gap-16">
@@ -374,7 +376,7 @@ export default function Landing() {
                 THAT READS<br />
                 YOUR NUMBERS.
               </h2>
-              <p style={{ ...B, color: '#666', lineHeight: 1.7, fontSize: '0.95rem', marginTop: '1.5rem' }}>
+              <p style={{ ...B, color: MUTED, lineHeight: 1.7, fontSize: '0.95rem', marginTop: '1.5rem' }}>
                 PitchIQ Pro includes an AI Coach that analyzes your match history and generates personalized training plans — not generic advice, but recommendations built from your specific data.
               </p>
               <button onClick={signIn} style={{ ...BC, fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', background: LIME, color: BLACK, padding: '12px 24px', border: 'none', marginTop: '2rem', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -387,7 +389,7 @@ export default function Landing() {
               <div style={{ border: `1px solid ${BORDER}`, padding: '1.5rem', background: BLACK }}>
                 <div className="flex items-center gap-2 mb-4">
                   <div style={{ width: 6, height: 6, background: LIME, borderRadius: 0 }} />
-                  <span style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.18em', color: '#555' }}>AI COACH INSIGHT</span>
+                  <span style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.18em', color: MUTED }}>AI COACH INSIGHT</span>
                 </div>
                 {[
                   { tag: 'IMPROVEMENT', text: 'Your pass accuracy drops 12% when you play LW vs CM. Suggest more positional training at left wing.', color: LIME },
@@ -396,7 +398,7 @@ export default function Landing() {
                 ].map(({ tag, text, color }) => (
                   <div key={tag} style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '1rem', marginTop: '1rem' }}>
                     <span style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.14em', color, fontWeight: 700 }}>{tag}</span>
-                    <p style={{ ...B, fontSize: '0.8rem', color: '#888', lineHeight: 1.5, marginTop: '0.35rem' }}>{text}</p>
+                    <p style={{ ...B, fontSize: '0.8rem', color: DIM, lineHeight: 1.5, marginTop: '0.35rem' }}>{text}</p>
                   </div>
                 ))}
               </div>
@@ -416,7 +418,7 @@ export default function Landing() {
               <div style={{ width: 1, height: 32, background: LIME }} />
               <div>
                 <p style={{ ...BC, fontSize: '0.8rem', fontWeight: 700, color: CREAM }}>ALEX RIVERA</p>
-                <p style={{ ...B, fontSize: '0.7rem', color: '#555' }}>ECNL Player · Forward · U18</p>
+                <p style={{ ...B, fontSize: '0.7rem', color: MUTED }}>ECNL Player · Forward · U18</p>
               </div>
             </div>
           </Reveal>
@@ -427,7 +429,7 @@ export default function Landing() {
       <section style={{ background: GRAY, borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: '#444' }} className="mb-16 uppercase">05 / Process</p>
+            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: MUTED }} className="mb-16 uppercase">05 / Process</p>
           </Reveal>
           <div className="grid md:grid-cols-3 gap-0">
             {[
@@ -437,9 +439,9 @@ export default function Landing() {
             ].map(({ n, t, b }, i) => (
               <Reveal key={n} delay={i * 0.08}>
                 <div style={{ borderTop: `2px solid ${i === 0 ? LIME : BORDER}`, paddingTop: '2rem', paddingRight: i < 2 ? '3rem' : 0, marginRight: i < 2 ? '3rem' : 0, borderRight: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                  <p style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: '#222', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: '1.5rem' }}>{n}</p>
+                  <p style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: '#3a3a3a', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: '1.5rem' }}>{n}</p>
                   <p style={{ ...BC, fontSize: '1rem', fontWeight: 700, color: CREAM, letterSpacing: '0.04em', marginBottom: '0.75rem' }}>{t}</p>
-                  <p style={{ ...B, color: '#666', fontSize: '0.875rem', lineHeight: 1.65 }}>{b}</p>
+                  <p style={{ ...B, color: MUTED, fontSize: '0.875rem', lineHeight: 1.65 }}>{b}</p>
                 </div>
               </Reveal>
             ))}
@@ -451,7 +453,7 @@ export default function Landing() {
       <section style={{ borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: '#444' }} className="mb-4 uppercase">06 / Pricing</p>
+            <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: MUTED }} className="mb-4 uppercase">06 / Pricing</p>
             <h2 style={{ ...BC, fontSize: 'clamp(2.5rem,5vw,4rem)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 0.92, color: CREAM }} className="mb-16">
               START FREE.<br />GO PRO WHEN YOU'RE READY.
             </h2>
@@ -461,14 +463,14 @@ export default function Landing() {
             {/* Free */}
             <Reveal>
               <div style={{ border: `1px solid ${BORDER}`, padding: '2rem', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.18em', color: '#555', marginBottom: '1rem' }}>FREE</p>
+                <p style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.18em', color: MUTED, marginBottom: '1rem' }}>FREE</p>
                 <div style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: CREAM, lineHeight: 1, marginBottom: '0.25rem' }}>$0</div>
-                <p style={{ ...B, color: '#555', fontSize: '0.8rem', marginBottom: '2rem' }}>Always free. No card needed.</p>
+                <p style={{ ...B, color: MUTED, fontSize: '0.8rem', marginBottom: '2rem' }}>Always free. No card needed.</p>
                 <ul className="space-y-2.5 flex-1 mb-8">
                   {['Unlimited match logging', 'Season stats dashboard', 'Goal tracking', 'Performance charts', 'Demo mode'].map(f => (
                     <li key={f} className="flex items-center gap-2.5">
                       <Check size={13} color={LIME}/>
-                      <span style={{ ...B, fontSize: '0.85rem', color: '#888' }}>{f}</span>
+                      <span style={{ ...B, fontSize: '0.85rem', color: DIM }}>{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -487,12 +489,12 @@ export default function Landing() {
                   <span style={{ ...BC, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', background: LIME, color: BLACK, padding: '2px 8px' }}>POPULAR</span>
                 </div>
                 <div style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: CREAM, lineHeight: 1, marginBottom: '0.25rem' }}>$4.99</div>
-                <p style={{ ...B, color: '#555', fontSize: '0.8rem', marginBottom: '2rem' }}>Per month. Cancel anytime.</p>
+                <p style={{ ...B, color: MUTED, fontSize: '0.8rem', marginBottom: '2rem' }}>Per month. Cancel anytime.</p>
                 <ul className="space-y-2.5 flex-1 mb-8">
                   {['Everything in Free', 'AI Coach analysis', 'Custom training plans', 'Injury tracker', 'Recruit profile page', 'Season archive'].map(f => (
                     <li key={f} className="flex items-center gap-2.5">
                       <Check size={13} color={LIME}/>
-                      <span style={{ ...B, fontSize: '0.85rem', color: '#bbb' }}>{f}</span>
+                      <span style={{ ...B, fontSize: '0.85rem', color: DIM }}>{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -514,7 +516,7 @@ export default function Landing() {
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
-            <p style={{ ...B, color: '#3a3a00', fontSize: '1rem', lineHeight: 1.7, marginBottom: '2rem' }}>
+            <p style={{ ...B, color: '#2a2a00', fontSize: '1rem', lineHeight: 1.7, marginBottom: '2rem' }}>
               Join hundreds of competitive youth players who track their development with PitchIQ. Free to start — takes 2 minutes to set up.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -534,9 +536,9 @@ export default function Landing() {
       {/* ── FOOTER ────────────────────────────────────────────────────────── */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '2rem 1.5rem' }} className="lg:px-10">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span style={{ ...BC, fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.1em', color: '#444' }}>PITCHIQ</span>
+          <span style={{ ...BC, fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.1em', color: MUTED }}>PITCHIQ</span>
           <p style={{ ...B, color: '#333', fontSize: '0.75rem' }}>© 2025 PitchIQ · Built for players who want more than highlights.</p>
-          <div className="flex gap-5" style={{ ...B, fontSize: '0.75rem', color: '#444' }}>
+          <div className="flex gap-5" style={{ ...B, fontSize: '0.75rem', color: MUTED }}>
             <span className="cursor-pointer hover:text-white transition-colors">Privacy</span>
             <span className="cursor-pointer hover:text-white transition-colors">Terms</span>
             <button onClick={() => setModal(true)} className="hover:text-white transition-colors">Sign In</button>
