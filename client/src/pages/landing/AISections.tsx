@@ -29,14 +29,16 @@ const FRAGMENTS: [number, number, string][] = [
 ]
 
 function Fragment({ p, sx, sy, text }: { p: MotionValue<number>; sx: number; sy: number; text: string }) {
-  /* drift from scattered position to center, fading as the network forms */
-  const x = useTransform(p, [0, 0.45], [`${sx - 50}%`, '0%'])
-  const y = useTransform(p, [0, 0.45], [`${sy - 50}%`, '0%'])
-  const opacity = useTransform(p, [0, 0.1, 0.4, 0.5], [0, 0.85, 0.6, 0])
-  const scale = useTransform(p, [0, 0.45], [1, 0.4])
+  /* drift toward center — vw/vh units (element-relative % would collapse all
+     fragments onto the center point). They converge only 75% of the way and
+     dissolve while still spatially distinct, so no unreadable pile-up. */
+  const x = useTransform(p, [0, 0.42], [`${(sx - 50) * 0.9}vw`, `${(sx - 50) * 0.22}vw`])
+  const y = useTransform(p, [0, 0.42], [`${(sy - 50) * 0.85}vh`, `${(sy - 50) * 0.22}vh`])
+  const opacity = useTransform(p, [0, 0.08, 0.3, 0.42], [0, 0.85, 0.55, 0])
+  const scale = useTransform(p, [0, 0.42], [1, 0.6])
   return (
     <motion.span aria-hidden className="absolute left-1/2 top-1/2 whitespace-nowrap"
-      style={{ ...MONO, x, y, opacity, scale, fontSize: '0.7rem', color: color.inkDim, translateX: '-50%', translateY: '-50%' }}>
+      style={{ ...MONO, x, y, opacity, scale, fontSize: '0.7rem', color: color.inkDim }}>
       {text}
     </motion.span>
   )
@@ -54,10 +56,10 @@ export function AIReveal() {
   const { scrollYProgress } = useScroll({ target: outer, offset: ['start start', 'end end'] })
   const p = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.4 })
 
-  const netOpacity = useTransform(p, [0.35, 0.5], [0, 1])
-  const netScale = useTransform(p, [0.35, 0.55], [0.85, 1])
+  const netOpacity = useTransform(p, [0.3, 0.45], [0, 1])
+  const netScale = useTransform(p, [0.3, 0.52], [0.85, 1])
   const netFade = useTransform(p, [0.62, 0.78], [1, 0])
-  const edgeDraw = useTransform(p, [0.42, 0.6], [0, 1])
+  const edgeDraw = useTransform(p, [0.36, 0.56], [0, 1])
   const cardIn = useTransform(p, [0.68, 0.85], [0, 1])
   const cardY = useTransform(p, [0.68, 0.85], [48, 0])
   const introFade = useTransform(p, [0, 0.12, 0.3], [1, 1, 0])
