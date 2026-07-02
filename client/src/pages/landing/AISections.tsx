@@ -32,10 +32,10 @@ function Fragment({ p, sx, sy, text }: { p: MotionValue<number>; sx: number; sy:
   /* drift toward center — vw/vh units (element-relative % would collapse all
      fragments onto the center point). They converge only 75% of the way and
      dissolve while still spatially distinct, so no unreadable pile-up. */
-  const x = useTransform(p, [0, 0.42], [`${(sx - 50) * 0.9}vw`, `${(sx - 50) * 0.22}vw`])
-  const y = useTransform(p, [0, 0.42], [`${(sy - 50) * 0.85}vh`, `${(sy - 50) * 0.22}vh`])
-  const opacity = useTransform(p, [0, 0.08, 0.3, 0.42], [0, 0.85, 0.55, 0])
-  const scale = useTransform(p, [0, 0.42], [1, 0.6])
+  const x = useTransform(p, [0, 0.38], [`${(sx - 50) * 0.9}vw`, `${(sx - 50) * 0.22}vw`])
+  const y = useTransform(p, [0, 0.38], [`${(sy - 50) * 0.7}vh`, `${(sy - 50) * 0.2}vh`])
+  const opacity = useTransform(p, [0, 0.06, 0.28, 0.38], [0, 0.9, 0.6, 0])
+  const scale = useTransform(p, [0, 0.38], [1, 0.6])
   return (
     <motion.span aria-hidden className="absolute left-1/2 top-1/2 whitespace-nowrap"
       style={{ ...MONO, x, y, opacity, scale, fontSize: '0.7rem', color: color.inkDim }}>
@@ -56,13 +56,15 @@ export function AIReveal() {
   const { scrollYProgress } = useScroll({ target: outer, offset: ['start start', 'end end'] })
   const p = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.4 })
 
-  const netOpacity = useTransform(p, [0.3, 0.45], [0, 1])
-  const netScale = useTransform(p, [0.3, 0.52], [0.85, 1])
-  const netFade = useTransform(p, [0.62, 0.78], [1, 0])
-  const edgeDraw = useTransform(p, [0.36, 0.56], [0, 1])
-  const cardIn = useTransform(p, [0.68, 0.85], [0, 1])
-  const cardY = useTransform(p, [0.68, 0.85], [48, 0])
-  const introFade = useTransform(p, [0, 0.12, 0.3], [1, 1, 0])
+  /* phases overlap so the screen is never sparse: network forms while
+     fragments are still converging, card rises while the network glows */
+  const netOpacity = useTransform(p, [0.22, 0.38], [0, 1])
+  const netScale = useTransform(p, [0.22, 0.45], [0.85, 1])
+  const netFade = useTransform(p, [0.52, 0.66], [1, 0.25])
+  const edgeDraw = useTransform(p, [0.26, 0.46], [0, 1])
+  const cardIn = useTransform(p, [0.52, 0.68], [0, 1])
+  const cardY = useTransform(p, [0.52, 0.68], [48, 0])
+  const introFade = useTransform(p, [0, 0.14, 0.3], [1, 1, 0])
   const netVisible = useTransform([netOpacity, netFade] as MotionValue<number>[], ([a, b]: number[]) => a * b)
 
   if (reduced) {
@@ -81,7 +83,7 @@ export function AIReveal() {
   }
 
   return (
-    <section ref={outer} className="relative" style={{ height: '260vh', background: color.surface, borderBottom: `1px solid ${color.border}` }}>
+    <section ref={outer} className="relative" style={{ height: '180vh', background: color.surface, borderBottom: `1px solid ${color.border}` }}>
       <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center px-6">
         {/* ambient AI light */}
         <motion.div aria-hidden className="absolute inset-0 pointer-events-none"
