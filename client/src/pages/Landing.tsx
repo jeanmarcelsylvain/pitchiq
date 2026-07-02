@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 
 import { useNavigate } from 'react-router-dom'
 import {
   motion, useInView, AnimatePresence, useScroll, useTransform,
-  useSpring, useReducedMotion,
+  useSpring, useReducedMotion, useMotionValue,
 } from 'framer-motion'
 import Lenis from 'lenis'
 import { X, ArrowUpRight, ArrowDown, Check } from 'lucide-react'
@@ -148,9 +148,20 @@ export default function Landing() {
 
   const { scrollY, scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28, mass: 0.4 })
-  const heroImgScale = useTransform(scrollY, [0, 800], [1.05, 1.18])
+  const heroImgScale = useTransform(scrollY, [0, 800], [1.08, 1.2])
   const heroTextY = useTransform(scrollY, [0, 600], [0, 140])
   const heroFade = useTransform(scrollY, [0, 500], [1, 0])
+
+  /* Cursor depth — the stadium plate drifts a few px against the pointer */
+  const pxRaw = useMotionValue(0)
+  const pyRaw = useMotionValue(0)
+  const parallaxX = useSpring(pxRaw, { stiffness: 40, damping: 22, mass: 1 })
+  const parallaxY = useSpring(pyRaw, { stiffness: 40, damping: 22, mass: 1 })
+  const onHeroMouse = (e: React.MouseEvent) => {
+    if (reduced) return
+    pxRaw.set((e.clientX / window.innerWidth - 0.5) * -18)
+    pyRaw.set((e.clientY / window.innerHeight - 0.5) * -12)
+  }
 
   /* Weighty, physical smooth scrolling */
   useEffect(() => {
@@ -206,13 +217,24 @@ export default function Landing() {
         </div>
       </nav>
 
+      {/* Skip link — first focusable element on the page */}
+      <a href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:px-4 focus:py-2"
+        style={{ ...BC, fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', background: ACCENT, color: BASE }}>
+        SKIP TO CONTENT
+      </a>
+
       {/* ── HERO — cinematic stadium open ────────────────────────────────── */}
-      <section className="relative min-h-screen flex flex-col justify-end pb-16 pt-32 px-6 lg:px-10 overflow-hidden">
-        {/* Stadium photography, slow push-in. PLACEHOLDER: drop production image at client/public/img/stadium-hero.jpg */}
+      <section onMouseMove={onHeroMouse}
+        className="relative min-h-screen flex flex-col justify-end pb-16 pt-32 px-6 lg:px-10 overflow-hidden">
+        {/* Stadium photography: slow push-in + cursor depth drift */}
         <motion.div
+          aria-hidden
           className="absolute inset-0"
           style={{
             scale: reduced ? 1 : heroImgScale,
+            x: parallaxX,
+            y: parallaxY,
             backgroundSize: 'cover',
             backgroundPosition: 'center 30%',
             backgroundImage: `url(/img/stadium-hero.jpg), radial-gradient(ellipse at 50% 20%, #26305a 0%, ${BASE} 70%)`,
@@ -222,9 +244,55 @@ export default function Landing() {
           transition={{ duration: 1.6, ease: EASE }}
         />
         {/* Grade: darken + vignette so type always reads */}
-        <div className="absolute inset-0" style={{
-          background: `linear-gradient(180deg, rgba(10,13,28,0.55) 0%, rgba(10,13,28,0.35) 40%, rgba(10,13,28,0.92) 88%, ${BASE} 100%)`,
+        <div aria-hidden className="absolute inset-0" style={{
+          background: `linear-gradient(90deg, rgba(10,13,28,0.6) 0%, rgba(10,13,28,0.15) 55%, transparent 75%), linear-gradient(180deg, rgba(10,13,28,0.55) 0%, rgba(10,13,28,0.42) 40%, rgba(10,13,28,0.92) 88%, ${BASE} 100%)`,
         }} />
+
+        {/* Floating match readout — the product, live in the hero (lg+) */}
+        <motion.aside
+          aria-label="Example match report"
+          className="hidden lg:block absolute right-10 xl:right-20 top-1/2 z-10 w-[300px]"
+          initial={{ opacity: 0, y: 40, rotate: 1.5 }}
+          animate={{ opacity: 1, y: '-50%', rotate: 0 }}
+          transition={{ duration: 1.2, delay: 1.4, ease: EASE }}
+        >
+          <motion.div
+            animate={reduced ? undefined : { y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            className="glass rounded-lg p-5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.18em', color: MUTED }}>LAST MATCH · VS ATLAS FC</span>
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: ACCENT }} />
+            </div>
+            <div className="flex items-end gap-3 mb-1">
+              <span style={{ ...BC, fontSize: '3.25rem', fontWeight: 800, lineHeight: 0.9, color: CREAM, fontVariantNumeric: 'tabular-nums' }}>
+                <Counter to={8.4} decimals={1} />
+              </span>
+              <span style={{ ...MONO, fontSize: '0.7rem', color: '#2dd4a0', paddingBottom: 4 }}>↑ 0.6 vs avg</span>
+            </div>
+            <p style={{ ...B, fontSize: '0.7rem', color: MUTED }} className="mb-5">Match rating</p>
+            {([['Goals', 2, 66], ['Pass accuracy', '87%', 87], ['Sprint speed', '31.2 km/h', 78]] as const).map(([label, val, w], i) => (
+              <div key={label} className="mb-3">
+                <div className="flex justify-between mb-1">
+                  <span style={{ ...B, fontSize: '0.72rem', color: DIM }}>{label}</span>
+                  <span style={{ ...MONO, fontSize: '0.7rem', color: CREAM }}>{val}</span>
+                </div>
+                <div className="h-[3px] rounded-full" style={{ background: 'rgba(37,43,77,0.9)' }}>
+                  <motion.div className="h-full rounded-full" style={{ background: ACCENT }}
+                    initial={{ width: 0 }} animate={{ width: `${w}%` }}
+                    transition={{ duration: 1, delay: 1.8 + i * 0.15, ease: EASE }} />
+                </div>
+              </div>
+            ))}
+            <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${BORDER}` }}>
+              <p style={{ ...B, fontSize: '0.72rem', lineHeight: 1.5, color: '#7ab8ff' }}>
+                <span style={{ ...BC, fontWeight: 700, letterSpacing: '0.1em', fontSize: '0.6rem' }}>AI COACH · </span>
+                Your best ratings this season came at CM. Ask for more minutes there.
+              </p>
+            </div>
+          </motion.div>
+        </motion.aside>
 
         <motion.div style={{ y: reduced ? 0 : heroTextY, opacity: heroFade }} className="relative z-10">
           <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.1, delay: 0.5, ease: EASE }}
@@ -238,10 +306,21 @@ export default function Landing() {
           <MaskedLines
             delay={0.25}
             style={{ ...BC, fontSize: 'clamp(3.5rem, 11vw, 9rem)', fontWeight: 800, lineHeight: 0.88, letterSpacing: '-0.02em', color: CREAM }}
-            lines={['KNOW', 'YOUR', <span key="g" style={{ color: ACCENT }}>GAME.</span>]}
+            lines={[
+              'KNOW',
+              <span key="y" style={{ color: 'transparent', WebkitTextStroke: `2px ${CREAM}` }}>YOUR</span>,
+              <span key="g" style={{ color: ACCENT }}>GAME.</span>,
+            ]}
           />
 
-          <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
+          <motion.p
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: EASE }}
+            style={{ ...B, color: DIM, fontSize: '1.05rem', lineHeight: 1.65, maxWidth: 420, marginTop: '1.75rem' }}>
+            Log every match. Track every trend. Get AI coaching built from your own numbers — not generic drills.
+          </motion.p>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.9, ease: EASE }}>
               <Magnetic>
                 <button onClick={signIn}
@@ -309,7 +388,7 @@ export default function Landing() {
       </div>
 
       {/* ── 01 / THE PLATFORM ─────────────────────────────────────────────── */}
-      <section style={{ borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
+      <section id="main" style={{ borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-end">
           <div>
             <Reveal><p style={sectionLabel} className="mb-5 uppercase">01 / The Platform</p></Reveal>
