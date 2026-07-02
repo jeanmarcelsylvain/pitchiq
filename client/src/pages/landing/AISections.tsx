@@ -81,7 +81,7 @@ export function AIReveal() {
   }
 
   return (
-    <section ref={outer} className="relative" style={{ height: '320vh', background: color.surface, borderBottom: `1px solid ${color.border}` }}>
+    <section ref={outer} className="relative" style={{ height: '260vh', background: color.surface, borderBottom: `1px solid ${color.border}` }}>
       <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center px-6">
         {/* ambient AI light */}
         <motion.div aria-hidden className="absolute inset-0 pointer-events-none"
