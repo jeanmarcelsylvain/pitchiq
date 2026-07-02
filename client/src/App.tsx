@@ -1,29 +1,33 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { Layout } from '@/components/Layout'
+import { Loader } from '@/components/Loader'
 import ProGate from '@/components/ProGate'
 import Landing from '@/pages/Landing'
-import Onboarding from '@/pages/Onboarding'
-import Dashboard from '@/pages/Dashboard'
-import Matches from '@/pages/Matches'
-import Analytics from '@/pages/Analytics'
-import Goals from '@/pages/Goals'
-import Profile from '@/pages/Profile'
-import AICoach from '@/pages/AICoach'
-import Achievements from '@/pages/Achievements'
-import RecruitProfile from '@/pages/RecruitProfile'
-import Highlights from '@/pages/Highlights'
-import ScoutView from '@/pages/ScoutView'
-import Injuries from '@/pages/Injuries'
-import MatchCalendar from '@/pages/MatchCalendar'
-import SeasonArchive from '@/pages/SeasonArchive'
-import TrainingPlan from '@/pages/TrainingPlan'
-import Pricing from '@/pages/Pricing'
-import SubscribeSuccess from '@/pages/SubscribeSuccess'
 import TutorialOverlay, { TOUR_KEY } from '@/components/TutorialOverlay'
 import { Ambient } from '@/design/Ambient'
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
+
+/* Authenticated pages are code-split — the landing page never ships them
+   (or their chart library). Each loads on first navigation. */
+const Onboarding      = lazy(() => import('@/pages/Onboarding'))
+const Dashboard       = lazy(() => import('@/pages/Dashboard'))
+const Matches         = lazy(() => import('@/pages/Matches'))
+const Analytics       = lazy(() => import('@/pages/Analytics'))
+const Goals           = lazy(() => import('@/pages/Goals'))
+const Profile         = lazy(() => import('@/pages/Profile'))
+const AICoach         = lazy(() => import('@/pages/AICoach'))
+const Achievements    = lazy(() => import('@/pages/Achievements'))
+const RecruitProfile  = lazy(() => import('@/pages/RecruitProfile'))
+const Highlights      = lazy(() => import('@/pages/Highlights'))
+const ScoutView       = lazy(() => import('@/pages/ScoutView'))
+const Injuries        = lazy(() => import('@/pages/Injuries'))
+const MatchCalendar   = lazy(() => import('@/pages/MatchCalendar'))
+const SeasonArchive   = lazy(() => import('@/pages/SeasonArchive'))
+const TrainingPlan    = lazy(() => import('@/pages/TrainingPlan'))
+const Pricing         = lazy(() => import('@/pages/Pricing'))
+const SubscribeSuccess = lazy(() => import('@/pages/SubscribeSuccess'))
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading, isDemoMode } = useAuth()
@@ -35,14 +39,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   })
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-pitch-500" />
-          <p className="text-sm text-slate-500">Loading MyFutbolPro…</p>
-        </div>
-      </div>
-    )
+    return <Loader />
   }
 
   if (!user && !isDemoMode) return <Navigate to="/" replace />
@@ -63,20 +60,14 @@ function AppRoutes() {
   const { user, loading, isDemoMode } = useAuth()
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-pitch-500" />
-          <p className="text-sm text-slate-500">Loading MyFutbolPro…</p>
-        </div>
-      </div>
-    )
+    return <Loader />
   }
 
   const isAuthed = !!user || isDemoMode
   const isOnboarded = user ? localStorage.getItem(`onboarded_${user.uid}`) === 'true' : true
 
   return (
+    <Suspense fallback={<Loader />}>
     <Routes>
       <Route path="/" element={
         !isAuthed ? <Landing /> :
@@ -108,6 +99,7 @@ function AppRoutes() {
       <Route path="/scout/:encoded"    element={<ScoutView />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }
 

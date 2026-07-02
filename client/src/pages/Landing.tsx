@@ -284,7 +284,7 @@ export default function Landing() {
 
           {/* Stat row */}
           <motion.div className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-0 border-t"
-            style={{ borderColor: 'rgba(60,48,80,0.7)' }}
+            style={{ borderColor: 'rgba(37,43,77,0.8)' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1, duration: 0.9 }}>
             {[
               { n: 2400, s: '+', l: 'Matches Logged' },
@@ -292,7 +292,7 @@ export default function Landing() {
               { n: 98,   s: '%', l: 'Retention' },
               { n: 500,  s: '+', l: 'Active Players' },
             ].map(({ n, s, l }, i) => (
-              <div key={l} className="py-6 pr-6" style={{ borderRight: i < 3 ? `1px solid rgba(60,48,80,0.7)` : 'none', paddingLeft: i > 0 ? '1.5rem' : 0 }}>
+              <div key={l} className="py-6 pr-6" style={{ borderRight: i < 3 ? `1px solid rgba(37,43,77,0.8)` : 'none', paddingLeft: i > 0 ? '1.5rem' : 0 }}>
                 <div style={{ ...BC, fontSize: '2.5rem', fontWeight: 800, color: CREAM, letterSpacing: '-0.03em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                   <Counter to={n} suffix={s} />
                 </div>
@@ -311,16 +311,15 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ── MARQUEE ───────────────────────────────────────────────────────── */}
-      <div style={{ background: ACCENT, overflow: 'hidden', padding: '14px 0' }}>
-        <motion.div className="flex gap-12 whitespace-nowrap"
-          animate={reduced ? undefined : { x: [0, -1200] }} transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}>
-          {[...TICKER, ...TICKER, ...TICKER].map((t, i) => (
+      {/* ── MARQUEE — pure CSS, decorative ─────────────────────────────────── */}
+      <div aria-hidden style={{ background: ACCENT, overflow: 'hidden', padding: '14px 0' }}>
+        <div className="marquee-track flex w-max gap-12 whitespace-nowrap pr-12">
+          {[...TICKER, ...TICKER].map((t, i) => (
             <span key={i} style={{ ...BC, fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.18em', color: BASE }}>
               {t} ·
             </span>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       {/* ═══ THE STORY — ten chapters, problem → proof → action ═══════════ */}

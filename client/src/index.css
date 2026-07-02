@@ -105,6 +105,24 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.03em;
   }
+
+  /* Loader underline sweep */
+  .loader-sweep { animation: loaderSweep 1.1s cubic-bezier(0.16,1,0.3,1) infinite; }
+  @keyframes loaderSweep {
+    0%   { transform: translateX(-120%); }
+    100% { transform: translateX(400%); }
+  }
+
+  /* Marquee — pure CSS so it never touches the JS main thread */
+  .marquee-track { animation: marquee 22s linear infinite; will-change: transform; }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+    .loader-sweep { animation: none; transform: none; width: 100%; }
+  }
 }
 
 /* ── Light Mode ──────────────────────────────────────────────────────────── */
