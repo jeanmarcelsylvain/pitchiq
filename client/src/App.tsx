@@ -21,6 +21,7 @@ import TrainingPlan from '@/pages/TrainingPlan'
 import Pricing from '@/pages/Pricing'
 import SubscribeSuccess from '@/pages/SubscribeSuccess'
 import TutorialOverlay, { TOUR_KEY } from '@/components/TutorialOverlay'
+import { Ambient } from '@/design/Ambient'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
@@ -114,6 +115,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Ambient />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>

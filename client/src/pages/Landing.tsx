@@ -2,123 +2,26 @@ import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 
 import { useNavigate } from 'react-router-dom'
 import {
   motion, useInView, AnimatePresence, useScroll, useTransform,
-  useSpring, useReducedMotion, useMotionValue,
+  useSpring, useReducedMotion,
 } from 'framer-motion'
 import Lenis from 'lenis'
 import { X, ArrowUpRight, ArrowDown, Check } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { color, font, ease as EASE } from '@/design/tokens'
+import { Reveal, MaskedLines, Counter, Magnetic } from '@/design/motion'
 
-/* ═══ Design tokens ══════════════════════════════════════════════════════════
-   One palette, one easing curve, one timing scale — everything shares them. */
-const ACCENT = '#ff5a3c'   // coral-orange
-const BASE   = '#161025'   // deep indigo
-const PANEL  = '#211a30'
-const BORDER = '#3c3050'
-const CREAM  = '#f4ede2'
-const DIM    = '#e4d8f4'   // secondary text
-const MUTED  = '#c0aed8'   // tertiary text
+/* Local aliases — all values come from the shared token system */
+const ACCENT = color.accent
+const BASE   = color.bg
+const PANEL  = color.surface
+const BORDER = color.border
+const CREAM  = color.ink
+const DIM    = color.inkDim
+const MUTED  = color.inkMuted
 
-const BC   = { fontFamily: '"Barlow Condensed", sans-serif' }
-const B    = { fontFamily: '"Barlow", sans-serif' }
-const MONO = { fontFamily: '"JetBrains Mono", monospace' }
-
-/* Signature curve — used by every transition on the page */
-const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
-
-/* ═══ Motion primitives ══════════════════════════════════════════════════════ */
-
-/** Fade-up + blur-in on scroll. The workhorse reveal. */
-function Reveal({ children, delay = 0, className = '', y = 36 }: {
-  children: ReactNode; delay?: number; className?: string; y?: number
-}) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
-  const reduced = useReducedMotion()
-  return (
-    <motion.div
-      ref={ref}
-      initial={reduced ? { opacity: 0 } : { opacity: 0, y, filter: 'blur(6px)' }}
-      animate={inView
-        ? { opacity: 1, y: 0, filter: 'blur(0px)' }
-        : undefined}
-      transition={{ duration: 0.9, delay, ease: EASE }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-/** Headline lines rise out of a clipping mask, one line at a time. */
-function MaskedLines({ lines, style, delay = 0, as: Tag = 'h1' }: {
-  lines: ReactNode[]; style: CSSProperties; delay?: number; as?: 'h1' | 'h2'
-}) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-60px' })
-  const reduced = useReducedMotion()
-  return (
-    <Tag ref={ref} style={style}>
-      {lines.map((line, i) => (
-        <span key={i} style={{ display: 'block', overflow: 'hidden' }}>
-          <motion.span
-            style={{ display: 'block' }}
-            initial={reduced ? { opacity: 0 } : { y: '110%' }}
-            animate={inView ? { y: 0, opacity: 1 } : undefined}
-            transition={{ duration: 1, delay: delay + i * 0.09, ease: EASE }}
-          >
-            {line}
-          </motion.span>
-        </span>
-      ))}
-    </Tag>
-  )
-}
-
-/** Numbers count up with a cubic ease-out once visible. */
-function Counter({ to, suffix = '', decimals = 0 }: { to: number; suffix?: string; decimals?: number }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const inView = useInView(ref, { once: true })
-  const [n, setN] = useState(0)
-  useEffect(() => {
-    if (!inView) return
-    const dur = 1800, start = performance.now()
-    let raf: number
-    const tick = (t: number) => {
-      const p = Math.min((t - start) / dur, 1)
-      setN((1 - Math.pow(1 - p, 3)) * to)
-      if (p < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [inView, to])
-  return <span ref={ref}>{decimals ? n.toFixed(decimals) : Math.floor(n).toLocaleString()}{suffix}</span>
-}
-
-/** Buttons subtly follow the cursor — a magnetic pull, spring-released. */
-function Magnetic({ children, strength = 0.25 }: { children: ReactNode; strength?: number }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-  const sx = useSpring(x, { stiffness: 260, damping: 20, mass: 0.5 })
-  const sy = useSpring(y, { stiffness: 260, damping: 20, mass: 0.5 })
-  const reduced = useReducedMotion()
-  if (reduced) return <div>{children}</div>
-  return (
-    <motion.div
-      ref={ref}
-      style={{ x: sx, y: sy, display: 'inline-block' }}
-      onMouseMove={e => {
-        const r = ref.current?.getBoundingClientRect()
-        if (!r) return
-        x.set((e.clientX - (r.left + r.width / 2)) * strength)
-        y.set((e.clientY - (r.top + r.height / 2)) * strength)
-      }}
-      onMouseLeave={() => { x.set(0); y.set(0) }}
-    >
-      {children}
-    </motion.div>
-  )
-}
+const BC   = { fontFamily: font.display }
+const B    = { fontFamily: font.ui }
+const MONO = { fontFamily: font.mono }
 
 /** SVG line chart that draws itself when scrolled into view. */
 function DrawnChart() {
@@ -135,7 +38,7 @@ function DrawnChart() {
         </linearGradient>
       </defs>
       {[30, 60, 90].map(gy => (
-        <line key={gy} x1="0" y1={gy} x2="320" y2={gy} stroke="#332a44" strokeWidth="1" />
+        <line key={gy} x1="0" y1={gy} x2="320" y2={gy} stroke="#252b4d" strokeWidth="1" />
       ))}
       <motion.path
         d={`${linePath} L320,120 L0,120 Z`}
@@ -179,7 +82,7 @@ function CinematicBreak({ img, children }: { img: string; children?: ReactNode }
           y: reduced ? 0 : y,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundImage: `linear-gradient(rgba(22,16,37,0.45), rgba(22,16,37,0.72)), url(${img}), radial-gradient(ellipse at 50% 30%, #2a3555 0%, ${BASE} 75%)`,
+          backgroundImage: `linear-gradient(rgba(10,13,28,0.45), rgba(10,13,28,0.72)), url(${img}), radial-gradient(ellipse at 50% 30%, #26305a 0%, ${BASE} 75%)`,
         }}
       />
       <div className="relative h-full flex items-end px-6 lg:px-10 pb-16">
@@ -282,7 +185,7 @@ export default function Landing() {
       {/* ── NAV ──────────────────────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 lg:px-10 h-14"
         style={{
-          background: scrolled ? 'rgba(22,16,37,0.9)' : 'transparent',
+          background: scrolled ? 'rgba(10,13,28,0.9)' : 'transparent',
           borderBottom: scrolled ? `1px solid ${BORDER}` : '1px solid transparent',
           backdropFilter: scrolled ? 'blur(14px)' : 'none',
           transition: 'background 0.4s, border-color 0.4s',
@@ -312,7 +215,7 @@ export default function Landing() {
             scale: reduced ? 1 : heroImgScale,
             backgroundSize: 'cover',
             backgroundPosition: 'center 30%',
-            backgroundImage: `url(/img/stadium-hero.jpg), radial-gradient(ellipse at 50% 20%, #223050 0%, ${BASE} 70%)`,
+            backgroundImage: `url(/img/stadium-hero.jpg), radial-gradient(ellipse at 50% 20%, #26305a 0%, ${BASE} 70%)`,
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -320,7 +223,7 @@ export default function Landing() {
         />
         {/* Grade: darken + vignette so type always reads */}
         <div className="absolute inset-0" style={{
-          background: `linear-gradient(180deg, rgba(22,16,37,0.55) 0%, rgba(22,16,37,0.35) 40%, rgba(22,16,37,0.92) 88%, ${BASE} 100%)`,
+          background: `linear-gradient(180deg, rgba(10,13,28,0.55) 0%, rgba(10,13,28,0.35) 40%, rgba(10,13,28,0.92) 88%, ${BASE} 100%)`,
         }} />
 
         <motion.div style={{ y: reduced ? 0 : heroTextY, opacity: heroFade }} className="relative z-10">
@@ -352,7 +255,7 @@ export default function Landing() {
               <Magnetic strength={0.18}>
                 <button onClick={demo}
                   className="transition-colors hover:border-white"
-                  style={{ ...BC, fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.08em', background: 'rgba(22,16,37,0.4)', backdropFilter: 'blur(6px)', color: DIM, padding: '14px 28px', border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  style={{ ...BC, fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.08em', background: 'rgba(10,13,28,0.4)', backdropFilter: 'blur(6px)', color: DIM, padding: '14px 28px', border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8 }}>
                   VIEW DEMO
                 </button>
               </Magnetic>
@@ -592,7 +495,7 @@ export default function Landing() {
             ].map(({ n, t, b }, i) => (
               <Reveal key={n} delay={i * 0.1}>
                 <div style={{ borderTop: `2px solid ${i === 0 ? ACCENT : BORDER}`, paddingTop: '2rem', paddingRight: i < 2 ? '3rem' : 0, marginRight: i < 2 ? '3rem' : 0, borderRight: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                  <p style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: '#473a5c', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: '1.5rem' }}>{n}</p>
+                  <p style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: '#38406e', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: '1.5rem' }}>{n}</p>
                   <p style={{ ...BC, fontSize: '1rem', fontWeight: 700, color: CREAM, letterSpacing: '0.04em', marginBottom: '0.75rem' }}>{t}</p>
                   <p style={{ ...B, color: MUTED, fontSize: '0.875rem', lineHeight: 1.65 }}>{b}</p>
                 </div>

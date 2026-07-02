@@ -21,7 +21,7 @@ export default function ProGate({ children, feature = 'This feature' }: ProGateP
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-700 border-t-green-500" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-700 border-t-pitch-500" />
       </div>
     )
   }
@@ -38,15 +38,15 @@ export default function ProGate({ children, feature = 'This feature' }: ProGateP
       {/* Paywall overlay */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="mx-auto max-w-sm w-full rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur-sm p-8 text-center shadow-2xl">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-600/20 border border-green-600/30 mx-auto mb-4">
-            <Lock className="h-6 w-6 text-green-400" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-pitch-600/20 border border-pitch-600/30 mx-auto mb-4">
+            <Lock className="h-6 w-6 text-pitch-400" />
           </div>
           <h2 className="text-lg font-bold text-white mb-1">Pro Feature</h2>
           <p className="text-sm text-slate-400 mb-6">
             {feature} is available on MyFutbolPro Pro. Upgrade to unlock AI coaching, training plans, injury assessment, and recruitment tools.
           </p>
           <button onClick={handleUpgrade} disabled={checkoutLoading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-70 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-green-900/30 mb-3">
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 disabled:opacity-70 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-pitch-900/30 mb-3">
             {checkoutLoading
               ? <><Loader className="h-4 w-4 animate-spin" /> Redirecting to checkout…</>
               : <><Sparkles className="h-4 w-4" /> Upgrade to Pro — $4.99/mo</>

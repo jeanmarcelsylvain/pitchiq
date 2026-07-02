@@ -149,7 +149,7 @@ export default function TutorialOverlay({ uid, onComplete }: Props) {
           {/* Progress bar */}
           <div className="h-1 bg-slate-800">
             <div
-              className="h-full bg-green-500 transition-all duration-300"
+              className="h-full bg-pitch-500 transition-all duration-300"
               style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
             />
           </div>
@@ -188,7 +188,7 @@ export default function TutorialOverlay({ uid, onComplete }: Props) {
                   style={{
                     height: 5,
                     width: i === step ? 20 : 5,
-                    background: i < step ? '#22c55e' : i === step ? '#4ade80' : '#1e293b',
+                    background: i < step ? '#ff5a3c' : i === step ? '#ff7a60' : '#252b4d',
                   }}
                 />
               ))}
@@ -206,7 +206,7 @@ export default function TutorialOverlay({ uid, onComplete }: Props) {
               )}
               <button
                 onClick={handleNext}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-500 active:scale-95 px-4 py-2.5 text-sm font-semibold text-white transition-all"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 active:scale-95 px-4 py-2.5 text-sm font-semibold text-white transition-all"
               >
                 {isLast ? "Let's go!" : 'Next'}
                 {!isLast && <ArrowRight className="h-4 w-4" />}
