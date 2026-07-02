@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Activity, ClipboardList, Target, User,
+  Home, Activity, BookOpen, Target, Settings, Plus,
   LogOut, Menu, X, ChevronRight, Bell, Sparkles,
-  Trophy, FileText, Film, HeartPulse, Calendar, Archive,
+  Trophy, FileText, Film, HeartPulse, Calendar, TrendingUp,
   Dumbbell, Sun, Moon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -12,43 +12,45 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import type { ReactNode } from 'react'
 
+/* The athlete's operating system — eight spaces, one per job-to-be-done.
+   Routes are unchanged; only naming and grouping evolve. */
 const navGroups = [
   {
-    label: 'Overview',
+    label: 'Command',
     items: [
-      { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { to: '/dashboard', icon: Home, label: 'Player HQ' },
     ],
   },
   {
-    label: 'Performance',
+    label: 'The Season',
     items: [
-      { to: '/matches',   icon: ClipboardList, label: 'Matches' },
-      { to: '/calendar',  icon: Calendar,      label: 'Calendar' },
-      { to: '/analytics', icon: Activity,      label: 'Analytics' },
-      { to: '/goals',     icon: Target,        label: 'Goals' },
+      { to: '/matches',   icon: BookOpen, label: 'Match Journal' },
+      { to: '/calendar',  icon: Calendar, label: 'Fixtures' },
+      { to: '/analytics', icon: Activity, label: 'Performance Intel' },
+      { to: '/goals',     icon: Target,   label: 'Goals' },
     ],
   },
   {
-    label: 'AI Tools',
+    label: 'Performance Lab',
     items: [
-      { to: '/ai-coach',  icon: Sparkles,   label: 'AI Coach',      highlight: true },
-      { to: '/training',  icon: Dumbbell,   label: 'Training Plan', highlight: true },
-      { to: '/injuries',  icon: HeartPulse, label: 'Injury Tracker' },
+      { to: '/ai-coach',  icon: Sparkles,   label: 'AI Coach',       highlight: true },
+      { to: '/training',  icon: Dumbbell,   label: 'Training Plans', highlight: true },
+      { to: '/injuries',  icon: HeartPulse, label: 'Recovery' },
     ],
   },
   {
-    label: 'Career',
+    label: 'The Career',
     items: [
-      { to: '/achievements', icon: Trophy,    label: 'Achievements' },
-      { to: '/seasons',      icon: Archive,   label: 'Season Archive' },
-      { to: '/recruit',      icon: FileText,  label: 'Recruit Profile' },
-      { to: '/highlights',   icon: Film,      label: 'Highlights' },
+      { to: '/seasons',      icon: TrendingUp, label: 'Career Timeline' },
+      { to: '/achievements', icon: Trophy,     label: 'Trophy Room' },
+      { to: '/recruit',      icon: FileText,   label: 'Recruit Profile' },
+      { to: '/highlights',   icon: Film,       label: 'Highlights' },
     ],
   },
   {
     label: 'Account',
     items: [
-      { to: '/profile', icon: User, label: 'Profile' },
+      { to: '/profile', icon: Settings, label: 'Settings' },
     ],
   },
 ]
@@ -194,18 +196,22 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 items-center gap-3 border-b border-slate-800/80 bg-slate-950/90 px-4 backdrop-blur-sm lg:px-6">
-          <button onClick={() => setSidebarOpen(true)} className="text-slate-500 hover:text-white lg:hidden">
+        <header className="glass-nav flex h-14 items-center gap-3 px-4 lg:px-6">
+          <button onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className="text-slate-500 hover:text-white lg:hidden">
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
-          <button onClick={toggleTheme} title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          <button onClick={() => navigate('/matches')}
+            className="flex items-center gap-1.5 rounded-lg bg-pitch-600 hover:bg-pitch-500 px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95 shadow-glow-accent">
+            <Plus className="h-3.5 w-3.5" /> Log Match
+          </button>
+          <button onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 transition-all">
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <button className="relative text-slate-500 hover:text-slate-300 transition-colors">
+          <button aria-label="Notifications" className="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 transition-all">
             <Bell className="h-4 w-4" />
-            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-pitch-500" />
+            <span aria-hidden className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-pitch-500" />
           </button>
         </header>
 
