@@ -3,7 +3,7 @@
    this happen, why is it changing, what should I improve, what should I
    focus on before my next match. Nothing here is decoration — every chart
    traces back to real logged match fields via src/lib/performanceIntel.ts. */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Widget, ProgressRing } from '@/components/widgets/Widget'
 import { Counter } from '@/design/motion'
 import { color, font, ease } from '@/design/tokens'
-import { useAppData } from '@/hooks/useAppData'
+import { useCareerMatches } from '@/hooks/useCareerMatches'
 import {
   buildDNA, classifyStyle, detectPatterns,
   projectDevelopment, buildConsistency, buildMomentum,
@@ -26,10 +26,12 @@ import { PositionPitch } from '@/components/analytics/PositionPitch'
 import { InsightCards } from '@/components/analytics/InsightCards'
 import { ShootingFunnel } from '@/components/analytics/ShootingFunnel'
 import { MatchReplayStudio } from '@/components/analytics/MatchReplayStudio'
+import { ReplaySelector } from '@/components/analytics/ReplaySelector'
+import { ScopeSelector, type Scope } from '@/components/analytics/ScopeSelector'
 import { ConsistencyEngine } from '@/components/analytics/ConsistencyEngine'
 import { MomentumCard } from '@/components/analytics/MomentumCard'
 import { FutureDevelopment } from '@/components/analytics/FutureDevelopment'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const BC   = { fontFamily: font.display }
 const B    = { fontFamily: font.ui }
@@ -39,6 +41,10 @@ const MONO = { fontFamily: font.mono }
 const gridStroke = 'rgba(37,43,77,0.6)'
 const tickStyle = { fill: '#8a86a8', fontSize: 11 }
 const tooltipStyle = { background: '#171c38', border: `1px solid ${color.border}`, borderRadius: 10, color: color.ink, fontSize: 12 }
+/* shared X-axis config — preserveStartEnd + a tick gap keeps long career
+   histories (hundreds of matches) from turning into an unreadable label
+   smear, without needing per-chart tuning */
+const dateAxisProps = { dataKey: 'date', tick: tickStyle, axisLine: false, tickLine: false, interval: 'preserveStartEnd' as const, minTickGap: 28 }
 
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name: string; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
@@ -57,8 +63,26 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 const sectionLabel = { ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: color.inkMuted } as const
 
 export default function Analytics() {
-  const { matches } = useAppData()
   const navigate = useNavigate()
+  const { seasons, careerMatches, currentSeasonMatches } = useCareerMatches()
+
+  /* Scope defaults to the current season the first time an athlete has one;
+     falls back to career if there's only archived history (e.g. right after
+     an archive-and-reset). Every downstream calculation reads `matches`
+     below — nothing computes off currentSeasonMatches directly. */
+  const [scope, setScope] = useState<Scope>(() => currentSeasonMatches.length > 0 ? 'current' : 'career')
+  const matches = useMemo(() => {
+    if (scope === 'career') return careerMatches
+    if (scope === 'current') return currentSeasonMatches
+    return careerMatches.filter(m => m.seasonId === scope)
+  }, [scope, careerMatches, currentSeasonMatches])
+
+  const [replayId, setReplayId] = useState<string | null>(null)
+  const [recentReplayIds, setRecentReplayIds] = useState<string[]>([])
+  const selectReplay = (id: string) => {
+    setReplayId(id)
+    setRecentReplayIds(prev => [id, ...prev.filter(x => x !== id)].slice(0, 5))
+  }
 
   const sorted = useMemo(() => [...matches].sort((a, b) => a.date.localeCompare(b.date)), [matches])
 
@@ -68,7 +92,12 @@ export default function Analytics() {
   const projections = useMemo(() => projectDevelopment(dna), [dna])
   const consistencyMetrics = useMemo(() => buildConsistency(matches), [matches])
   const momentum = useMemo(() => buildMomentum(matches), [matches])
-  const replayMatch = useMemo(() => [...matches].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null, [matches])
+
+  const replayMatch = useMemo(() => {
+    if (careerMatches.length === 0) return null
+    if (replayId) return careerMatches.find(m => m.id === replayId) ?? null
+    return [...careerMatches].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null
+  }, [careerMatches, replayId])
 
   const chartData = sorted.map(m => ({
     date: m.date.slice(5), rating: m.rating, goals: m.goals, assists: m.assists,
@@ -88,7 +117,7 @@ export default function Analytics() {
   const totalTackles = matches.reduce((s, m) => s + m.tackles, 0)
   const totalInterceptions = matches.reduce((s, m) => s + m.interceptions, 0)
 
-  if (matches.length === 0) {
+  if (currentSeasonMatches.length === 0 && careerMatches.length === 0) {
     return (
       <div className="space-y-6 animate-slide-up">
         <div>
@@ -101,7 +130,7 @@ export default function Analytics() {
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Your intelligence engine needs data</h2>
           <p className="text-slate-500 max-w-sm mb-8 leading-relaxed">
-            Performance DNA, playing style, and pattern detection all build from your logged matches. Log your first one to switch this on.
+            Performance DNA, playing style, and pattern detection all build from your logged matches — current season or archived. Log your first one to switch this on.
           </p>
           <Button variant="primary" size="lg" onClick={() => navigate('/matches')}>
             <Plus className="h-4 w-4" /> Log a Match
@@ -113,10 +142,16 @@ export default function Analytics() {
 
   return (
     <div className="space-y-5 animate-slide-up">
-      <div>
-        <p style={sectionLabel} className="uppercase">Performance Intel</p>
-        <h1 className="mt-1 font-display text-2xl font-extrabold text-white">Understand your game.</h1>
-        <p className="mt-1 text-sm text-slate-500">Not statistics — intelligence, drawn from {matches.length} logged matches.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p style={sectionLabel} className="uppercase">Performance Intel</p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold text-white">Understand your game.</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Not statistics — intelligence, drawn from {matches.length} logged match{matches.length === 1 ? '' : 'es'}
+            {scope === 'career' ? ' across your full career.' : '.'}
+          </p>
+        </div>
+        <ScopeSelector seasons={seasons} scope={scope} onChange={setScope} />
       </div>
 
       {/* ── 1 · PERFORMANCE OVERVIEW ────────────────────────────────────── */}
@@ -181,7 +216,7 @@ export default function Analytics() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-              <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+              <XAxis {...dateAxisProps} />
               <YAxis domain={[4, 10]} tick={tickStyle} axisLine={false} tickLine={false} />
               <Tooltip content={<ChartTooltip />} />
               <Area type="monotone" dataKey="rating" name="Rating" stroke={color.accent} fill="url(#ratingGrad)" strokeWidth={2.5}
@@ -212,7 +247,7 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <XAxis {...dateAxisProps} />
                 <YAxis domain={[40, 100]} tick={tickStyle} axisLine={false} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} />
                 <Line type="monotone" dataKey="passAcc" name="Pass Acc %" stroke={color.ai} strokeWidth={2.5}
@@ -240,7 +275,7 @@ export default function Analytics() {
               <BarChart data={sorted.map(m => ({ date: m.date.slice(5), tackles: m.tackles, interceptions: m.interceptions }))}
                 margin={{ top: 8, right: 12, left: -18, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <XAxis {...dateAxisProps} />
                 <YAxis tick={tickStyle} axisLine={false} tickLine={false} allowDecimals={false} />
                 <Tooltip content={<ChartTooltip />} />
                 <Bar dataKey="tackles" name="Tackles" fill={color.accent} radius={[3, 3, 0, 0]} animationDuration={1000} />
@@ -264,7 +299,7 @@ export default function Analytics() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <XAxis {...dateAxisProps} />
                 <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} />
                 <Area type="monotone" dataKey="distance" name="Distance (km)" stroke={color.emerald} fill="url(#distGrad)" strokeWidth={2.5}
@@ -285,7 +320,7 @@ export default function Analytics() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <XAxis {...dateAxisProps} />
                 <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} />
                 <Area type="monotone" dataKey="speed" name="Speed (km/h)" stroke="#ff4d9e" fill="url(#speedGrad2)" strokeWidth={2.5}
@@ -325,9 +360,16 @@ export default function Analytics() {
 
       {/* ── 11 · MATCH REPLAY STUDIO ─────────────────────────────────────── */}
       {replayMatch && (
-        <Widget title="Match Replay Studio" badge={<Badge variant="info">vs {replayMatch.opponent}</Badge>}>
-          <div className="px-5 pb-5 pt-2">
-            <MatchReplayStudio match={replayMatch} />
+        <Widget title="Match Replay Studio" badge={<Badge variant="outline">{careerMatches.length} matches available</Badge>}>
+          <div className="px-5 pb-5 pt-2 space-y-5">
+            <ReplaySelector matches={careerMatches} selectedId={replayMatch.id} onSelect={selectReplay} recentIds={recentReplayIds} />
+            <AnimatePresence mode="wait">
+              <motion.div key={replayMatch.id}
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease }}>
+                <MatchReplayStudio match={replayMatch} />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </Widget>
       )}

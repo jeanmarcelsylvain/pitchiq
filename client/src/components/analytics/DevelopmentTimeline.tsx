@@ -1,7 +1,9 @@
 /* ═══ Development Timeline ════════════════════════════════════════════════
    Every match across every season, on one spine. Hover or focus any node
    for the full match card plus a one-line AI takeaway generated from how
-   that match compares to the athlete's rolling average at the time. */
+   that match compares to the athlete's rolling average at the time.
+   Supports filtering to a single season and left/right keyboard navigation
+   so long careers (hundreds of matches) stay usable, not just scrollable. */
 import { useState, useMemo, useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { color, font, ease } from '@/design/tokens'
@@ -11,7 +13,7 @@ const BC   = { fontFamily: font.display }
 const B    = { fontFamily: font.ui }
 const MONO = { fontFamily: font.mono }
 
-interface TimelineMatch extends Match { seasonName: string }
+interface TimelineMatch extends Match { seasonName: string; seasonId?: string }
 
 function takeaway(m: Match, rollingAvg: number): string {
   const delta = m.rating - rollingAvg
@@ -22,10 +24,20 @@ function takeaway(m: Match, rollingAvg: number): string {
   return 'A representative, on-average performance.'
 }
 
+const NODE_W = 14
+
 export function DevelopmentTimeline({ matches }: { matches: TimelineMatch[] }) {
-  const sorted = useMemo(() => [...matches].sort((a, b) => a.date.localeCompare(b.date)), [matches])
+  const fullSorted = useMemo(() => [...matches].sort((a, b) => a.date.localeCompare(b.date)), [matches])
+  const seasonNames = useMemo(() => [...new Set(fullSorted.map(m => m.seasonName))], [fullSorted])
+  const [seasonFilter, setSeasonFilter] = useState<string>('all')
+
+  const sorted = useMemo(
+    () => seasonFilter === 'all' ? fullSorted : fullSorted.filter(m => m.seasonName === seasonFilter),
+    [fullSorted, seasonFilter]
+  )
   const [active, setActive] = useState<number | null>(sorted.length ? sorted.length - 1 : null)
   const ref = useRef(null)
+  const spineRef = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
   const reduced = useReducedMotion()
   const show = inView || !!reduced
@@ -35,29 +47,72 @@ export function DevelopmentTimeline({ matches }: { matches: TimelineMatch[] }) {
     return window.reduce((s, m) => s + m.rating, 0) / window.length
   }
 
-  if (sorted.length === 0) return null
-  const activeMatch = active !== null ? sorted[active] : null
+  const moveFocus = (from: number, dir: 1 | -1) => {
+    const next = Math.min(sorted.length - 1, Math.max(0, from + dir))
+    setActive(next)
+    const btn = spineRef.current?.querySelectorAll('button')[next] as HTMLButtonElement | undefined
+    btn?.focus()
+  }
+
+  if (fullSorted.length === 0) return null
+  const activeIndex = active !== null ? Math.min(active, sorted.length - 1) : null
+  const activeMatch = activeIndex !== null ? sorted[activeIndex] : null
 
   const ratingColor = (r: number) => (r >= 7.5 ? color.emerald : r >= 6.5 ? color.warn : color.danger)
 
+  /* season boundaries — first index in `sorted` where a new season begins,
+     only meaningful (and rendered) when showing all seasons together */
+  const boundaries = seasonFilter === 'all'
+    ? sorted.reduce<{ i: number; name: string }[]>((acc, m, i) => {
+        if (i === 0 || m.seasonName !== sorted[i - 1].seasonName) acc.push({ i, name: m.seasonName })
+        return acc
+      }, [])
+    : []
+
   return (
     <div ref={ref}>
+      {seasonNames.length > 1 && (
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          <button onClick={() => { setSeasonFilter('all'); setActive(sorted.length - 1) }}
+            className="rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors"
+            style={{ ...BC, background: seasonFilter === 'all' ? color.accent : 'transparent', color: seasonFilter === 'all' ? color.bg : color.inkMuted, border: `1px solid ${seasonFilter === 'all' ? color.accent : color.border}` }}>
+            All Seasons
+          </button>
+          {seasonNames.map(name => (
+            <button key={name} onClick={() => setSeasonFilter(name)}
+              className="rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors"
+              style={{ ...BC, background: seasonFilter === name ? color.accent : 'transparent', color: seasonFilter === name ? color.bg : color.inkMuted, border: `1px solid ${seasonFilter === name ? color.accent : color.border}` }}>
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* spine */}
-      <div className="relative overflow-x-auto pb-3">
-        <div className="relative flex items-end gap-1 min-w-max px-1" style={{ height: 92 }}>
+      <div className="relative overflow-x-auto pb-3" role="group" aria-label="Match timeline — use arrow keys to navigate">
+        <div ref={spineRef} className="relative flex items-end gap-1 min-w-max px-1" style={{ height: boundaries.length > 1 ? 108 : 92 }}>
           <div aria-hidden className="absolute left-0 right-0 h-px" style={{ bottom: 24, background: color.border }} />
+          {boundaries.length > 1 && boundaries.map(b => (
+            <span key={b.name} aria-hidden style={{ position: 'absolute', left: b.i * (NODE_W + 4), bottom: 0, ...MONO, fontSize: '0.55rem', color: color.inkMuted, whiteSpace: 'nowrap' }}>
+              {b.name}
+            </span>
+          ))}
           {sorted.map((m, i) => {
-            const isActive = i === active
+            const isActive = i === activeIndex
             const h = 10 + (m.rating / 10) * 46
             return (
               <button key={m.id}
                 onClick={() => setActive(i)}
                 onFocus={() => setActive(i)}
                 onMouseEnter={() => setActive(i)}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowRight') { e.preventDefault(); moveFocus(i, 1) }
+                  if (e.key === 'ArrowLeft') { e.preventDefault(); moveFocus(i, -1) }
+                }}
                 aria-label={`${m.seasonName}: vs ${m.opponent}, ${m.rating.toFixed(1)} rating`}
                 aria-pressed={isActive}
                 className="relative flex flex-col items-center justify-end shrink-0 focus-visible:outline-none"
-                style={{ width: 14, height: 92 }}>
+                style={{ width: NODE_W, height: 92 }}>
                 <motion.span
                   initial={{ scaleY: 0 }} animate={show ? { scaleY: 1 } : undefined}
                   transition={{ duration: 0.5, delay: Math.min(i * 0.015, 1), ease }}
