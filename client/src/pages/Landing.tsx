@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  motion, useInView, AnimatePresence, useScroll, useTransform,
+  motion, AnimatePresence, useScroll, useTransform,
   useSpring, useReducedMotion, useMotionValue,
 } from 'framer-motion'
 import Lenis from 'lenis'
@@ -9,6 +9,10 @@ import { X, ArrowUpRight, ArrowDown, Check } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { color, font, ease as EASE } from '@/design/tokens'
 import { Reveal, MaskedLines, Counter, Magnetic } from '@/design/motion'
+import { WhyPitchIQ } from './landing/StoryIntro'
+import { DashboardAssembly, SeasonTimeline, PitchIntelligence, FloatingStats } from './landing/DataSections'
+import { AIReveal, TrainingPlanDemo } from './landing/AISections'
+import { RecruitCard, Transformations, FinalCTA } from './landing/ProofSections'
 
 /* Local aliases — all values come from the shared token system */
 const ACCENT = color.accent
@@ -22,75 +26,6 @@ const MUTED  = color.inkMuted
 const BC   = { fontFamily: font.display }
 const B    = { fontFamily: font.ui }
 const MONO = { fontFamily: font.mono }
-
-/** SVG line chart that draws itself when scrolled into view. */
-function DrawnChart() {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-100px' })
-  const linePath = 'M0,95 L40,82 L80,88 L120,65 L160,60 L200,42 L240,35 L280,22 L320,15'
-  const dots: [number, number][] = [[0,95],[40,82],[80,88],[120,65],[160,60],[200,42],[240,35],[280,22],[320,15]]
-  return (
-    <svg ref={ref} viewBox="0 0 320 120" className="w-full" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={ACCENT} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[30, 60, 90].map(gy => (
-        <line key={gy} x1="0" y1={gy} x2="320" y2={gy} stroke="#252b4d" strokeWidth="1" />
-      ))}
-      <motion.path
-        d={`${linePath} L320,120 L0,120 Z`}
-        fill="url(#chartFill)"
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 1 } : undefined}
-        transition={{ duration: 0.8, delay: 1.2, ease: EASE }}
-      />
-      <motion.path
-        d={linePath}
-        fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        initial={{ pathLength: 0 }}
-        animate={inView ? { pathLength: 1 } : undefined}
-        transition={{ duration: 1.6, ease: EASE }}
-      />
-      {dots.map(([cx, cy], i) => (
-        <motion.circle
-          key={i} cx={cx} cy={cy} r="3.5" fill={ACCENT}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={inView ? { scale: 1, opacity: 1 } : undefined}
-          transition={{ duration: 0.4, delay: 0.15 * i + 0.2, ease: EASE }}
-        />
-      ))}
-    </svg>
-  )
-}
-
-/** Full-bleed cinematic image break with parallax. Falls back to a gradient
-    until the production image exists at /img/<name>. */
-function CinematicBreak({ img, children }: { img: string; children?: ReactNode }) {
-  const ref = useRef(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const y = useTransform(scrollYProgress, [0, 1], ['-12%', '12%'])
-  const reduced = useReducedMotion()
-  return (
-    <section ref={ref} className="relative overflow-hidden" style={{ height: '70vh', minHeight: 420 }}>
-      <motion.div
-        className="absolute"
-        style={{
-          inset: '-15% 0',
-          y: reduced ? 0 : y,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundImage: `linear-gradient(rgba(10,13,28,0.45), rgba(10,13,28,0.72)), url(${img}), radial-gradient(ellipse at 50% 30%, #26305a 0%, ${BASE} 75%)`,
-        }}
-      />
-      <div className="relative h-full flex items-end px-6 lg:px-10 pb-16">
-        <div className="max-w-6xl mx-auto w-full">{children}</div>
-      </div>
-    </section>
-  )
-}
 
 function GoogleIcon() {
   return (
@@ -166,7 +101,8 @@ export default function Landing() {
   /* Weighty, physical smooth scrolling */
   useEffect(() => {
     if (reduced) return
-    const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 0.9 })
+    const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 0.9, anchors: true })
+    ;(window as Window & { __lenis?: Lenis }).__lenis = lenis
     let raf: number
     const loop = (t: number) => { lenis.raf(t); raf = requestAnimationFrame(loop) }
     raf = requestAnimationFrame(loop)
@@ -387,208 +323,23 @@ export default function Landing() {
         </motion.div>
       </div>
 
-      {/* ── 01 / THE PLATFORM ─────────────────────────────────────────────── */}
-      <section id="main" style={{ borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-end">
-          <div>
-            <Reveal><p style={sectionLabel} className="mb-5 uppercase">01 / The Platform</p></Reveal>
-            <MaskedLines as="h2" delay={0.1}
-              style={{ ...h2Style, fontSize: 'clamp(2.5rem, 5vw, 4rem)' }}
-              lines={['PERFORMANCE DATA', 'FOR PLAYERS WHO', 'TAKE IT SERIOUSLY.']} />
-          </div>
-          <div>
-            <Reveal delay={0.15}>
-              <p style={{ ...B, color: DIM, fontSize: '1.05rem', lineHeight: 1.7 }}>
-                PitchIQ gives competitive youth soccer players — ECNL, club, high school — the same performance tracking infrastructure used at the pro level. Log every match. See every trend. Know exactly what to fix.
-              </p>
-              <div className="mt-8 flex gap-6 items-center">
-                <Magnetic strength={0.15}>
-                  <button onClick={signIn} style={{ ...BC, fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', background: 'transparent', color: ACCENT, border: `1px solid ${ACCENT}`, padding: '10px 20px' }}
-                    className="hover:bg-white/5 transition-colors">
-                    START FREE →
-                  </button>
-                </Magnetic>
-                <button onClick={demo} style={{ ...B, fontSize: '0.8rem', color: MUTED, textDecoration: 'underline', textUnderlineOffset: 3, background: 'none', border: 'none' }}
-                  className="hover:text-white transition-colors">
-                  See demo
-                </button>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CINEMATIC BREAK — the pitch under lights ──────────────────────── */}
-      {/* PLACEHOLDER: drop production image at client/public/img/stadium-player.jpg */}
-      <CinematicBreak img="/img/stadium-player.jpg">
-        <Reveal>
-          <p style={{ ...BC, fontSize: 'clamp(1.5rem,3.5vw,2.75rem)', fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1, color: CREAM, maxWidth: 620 }}>
-            EVERY TOUCH TELLS A STORY.<br />
-            <span style={{ color: ACCENT }}>START WRITING YOURS DOWN.</span>
-          </p>
-        </Reveal>
-      </CinematicBreak>
-
-      {/* ── 02 / MATCH LOGGING ────────────────────────────────────────────── */}
-      <section style={{ background: PANEL, borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28 overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          <Reveal><p style={sectionLabel} className="mb-16 uppercase">02 / Match Logging</p></Reveal>
-          <div className="grid lg:grid-cols-[1fr_1.2fr] gap-12 items-center">
-            <Reveal>
-              <div style={{ ...BC, fontSize: 'clamp(7rem,18vw,14rem)', fontWeight: 900, color: ACCENT, lineHeight: 1, letterSpacing: '-0.05em', fontVariantNumeric: 'tabular-nums' }}>
-                <Counter to={14} />
-              </div>
-              <p style={{ ...B, color: MUTED, fontSize: '0.875rem', marginTop: '0.5rem' }}>metrics captured per match</p>
-            </Reveal>
-            <Reveal delay={0.12}>
-              <div style={{ borderLeft: `2px solid ${BORDER}`, paddingLeft: '2rem' }}>
-                <p style={{ ...BC, fontSize: '1.5rem', fontWeight: 700, color: CREAM, marginBottom: '1.5rem' }}>
-                  Every number that matters. Zero that don't.
-                </p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                  {['Goals', 'Assists', 'Pass Accuracy', 'Sprint Speed', 'Distance', 'Match Rating', 'Position', 'Minutes', 'Shots on Target', 'Duels Won', 'Competition', 'Result'].map((m, i) => (
-                    <motion.div key={m} className="flex items-center gap-2"
-                      initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.04 * i, ease: EASE }}>
-                      <div style={{ width: 4, height: 4, background: ACCENT, flexShrink: 0 }} />
-                      <span style={{ ...B, color: DIM, fontSize: '0.8rem' }}>{m}</span>
-                    </motion.div>
-                  ))}
-                </div>
-                <p style={{ ...B, color: MUTED, fontSize: '0.75rem', marginTop: '1.5rem' }}>Log a full match in under 60 seconds.</p>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 03 / ANALYTICS ────────────────────────────────────────────────── */}
-      <section style={{ borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
-        <div className="max-w-6xl mx-auto">
-          <Reveal><p style={sectionLabel} className="mb-16 uppercase">03 / Analytics</p></Reveal>
-          <div className="grid lg:grid-cols-[1.2fr_1fr] gap-16 items-center">
-            <Reveal>
-              <div style={{ border: `1px solid ${BORDER}`, background: PANEL, padding: '2rem' }}>
-                <div className="flex items-center justify-between mb-6">
-                  <span style={{ ...BC, fontSize: '0.65rem', letterSpacing: '0.16em', color: MUTED }}>RATING TREND — SEASON 2025</span>
-                  <span style={{ ...MONO, fontSize: '0.7rem', color: ACCENT }}>↑ <Counter to={18} suffix="%" /></span>
-                </div>
-                <DrawnChart />
-                <div className="flex justify-between mt-3">
-                  {['AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR','APR'].map(m => (
-                    <span key={m} style={{ ...BC, fontSize: '0.6rem', color: MUTED }}>{m}</span>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-            <Reveal delay={0.12}>
-              <MaskedLines as="h2" style={{ ...h2Style, fontSize: 'clamp(2rem,4vw,3.5rem)', marginBottom: '1.5rem' }}
-                lines={['SEE THE TREND', 'BEFORE YOUR', 'COACH DOES.']} />
-              <p style={{ ...B, color: MUTED, lineHeight: 1.7, fontSize: '0.95rem' }}>
-                Interactive charts surface performance patterns across your entire season. Compare form across positions, identify training load correlations, and spot your peak windows.
-              </p>
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                {[['Rating Trend', 'by match'], ['Pass Accuracy', 'over time'], ['Goals/Assists', 'ratio'], ['Sprint Speed', 'progression']].map(([a, b]) => (
-                  <div key={a} style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '0.75rem' }}>
-                    <div style={{ ...BC, fontSize: '0.8rem', fontWeight: 700, color: CREAM }}>{a}</div>
-                    <div style={{ ...B, fontSize: '0.7rem', color: MUTED }}>{b}</div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 04 / AI COACH ─────────────────────────────────────────────────── */}
-      <section style={{ background: PANEL, borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
-        <div className="max-w-6xl mx-auto">
-          <Reveal><p style={sectionLabel} className="mb-16 uppercase">04 / AI Tools · Pro</p></Reveal>
-          <div className="grid lg:grid-cols-2 gap-16">
-            <Reveal>
-              <MaskedLines as="h2" style={{ ...h2Style, fontSize: 'clamp(2rem,4vw,3.5rem)' }}
-                lines={['AN AI COACH', 'THAT READS', 'YOUR NUMBERS.']} />
-              <p style={{ ...B, color: MUTED, lineHeight: 1.7, fontSize: '0.95rem', marginTop: '1.5rem' }}>
-                PitchIQ Pro includes an AI Coach that analyzes your match history and generates personalized training plans — not generic advice, but recommendations built from your specific data.
-              </p>
-              <div style={{ marginTop: '2rem' }}>
-                <Magnetic strength={0.15}>
-                  <button onClick={signIn} className="transition-transform active:scale-95"
-                    style={{ ...BC, fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', background: ACCENT, color: BASE, padding: '12px 24px', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                    TRY PRO — $4.99/MO <ArrowUpRight size={13}/>
-                  </button>
-                </Magnetic>
-              </div>
-            </Reveal>
-            <Reveal delay={0.12}>
-              <div style={{ border: `1px solid ${BORDER}`, padding: '1.5rem', background: BASE }}>
-                <div className="flex items-center gap-2 mb-4">
-                  <motion.div style={{ width: 6, height: 6, background: ACCENT }}
-                    animate={reduced ? undefined : { opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }} />
-                  <span style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.18em', color: MUTED }}>AI COACH INSIGHT</span>
-                </div>
-                {[
-                  { tag: 'IMPROVEMENT', text: 'Your pass accuracy drops 12% when you play LW vs CM. Suggest more positional training at left wing.', color: ACCENT },
-                  { tag: 'TREND', text: 'Sprint speed has improved 8.3% over the last 6 matches — consistent with your new interval training load.', color: '#60b8ff' },
-                  { tag: 'ACTION', text: 'You\'ve played 3 matches in 8 days. Recommend a recovery session before Saturday to maintain peak output.', color: '#ffba08' },
-                ].map(({ tag, text, color }, i) => (
-                  <motion.div key={tag} style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '1rem', marginTop: '1rem' }}
-                    initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.15 * i, ease: EASE }}>
-                    <span style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.14em', color, fontWeight: 700 }}>{tag}</span>
-                    <p style={{ ...B, fontSize: '0.8rem', color: DIM, lineHeight: 1.5, marginTop: '0.35rem' }}>{text}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CINEMATIC BREAK + PULLQUOTE ───────────────────────────────────── */}
-      {/* PLACEHOLDER: drop production image at client/public/img/stadium-kick.jpg */}
-      <CinematicBreak img="/img/stadium-kick.jpg">
-        <Reveal>
-          <p style={{ ...BC, fontSize: 'clamp(1.75rem,4.5vw,3.5rem)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 0.95, color: CREAM, maxWidth: 900 }}>
-            "I USED TO GUESS WHERE MY GAME WAS WEAK.<br />NOW I JUST LOOK AT THE DATA."
-          </p>
-          <div className="flex items-center gap-3 mt-8">
-            <div style={{ width: 1, height: 32, background: ACCENT }} />
-            <div>
-              <p style={{ ...BC, fontSize: '0.8rem', fontWeight: 700, color: CREAM }}>ALEX RIVERA</p>
-              <p style={{ ...B, fontSize: '0.7rem', color: DIM }}>ECNL Player · Forward · U18</p>
-            </div>
-          </div>
-        </Reveal>
-      </CinematicBreak>
-
-      {/* ── 05 / PROCESS ──────────────────────────────────────────────────── */}
-      <section style={{ background: PANEL, borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
-        <div className="max-w-6xl mx-auto">
-          <Reveal><p style={sectionLabel} className="mb-16 uppercase">05 / Process</p></Reveal>
-          <div className="grid md:grid-cols-3 gap-0">
-            {[
-              { n: '01', t: 'LOG YOUR MATCH', b: 'After every game, spend 60 seconds entering your stats. Goals, assists, rating, position, sprint speed.' },
-              { n: '02', t: 'TRACK TRENDS', b: 'Charts update automatically. Watch your season arc build — see what\'s improving, what needs work.' },
-              { n: '03', t: 'ELEVATE YOUR GAME', b: 'Use data-driven insights and AI coaching to attack your specific weaknesses before the next kickoff.' },
-            ].map(({ n, t, b }, i) => (
-              <Reveal key={n} delay={i * 0.1}>
-                <div style={{ borderTop: `2px solid ${i === 0 ? ACCENT : BORDER}`, paddingTop: '2rem', paddingRight: i < 2 ? '3rem' : 0, marginRight: i < 2 ? '3rem' : 0, borderRight: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                  <p style={{ ...BC, fontSize: '3.5rem', fontWeight: 900, color: '#38406e', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: '1.5rem' }}>{n}</p>
-                  <p style={{ ...BC, fontSize: '1rem', fontWeight: 700, color: CREAM, letterSpacing: '0.04em', marginBottom: '0.75rem' }}>{t}</p>
-                  <p style={{ ...B, color: MUTED, fontSize: '0.875rem', lineHeight: 1.65 }}>{b}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ═══ THE STORY — ten chapters, problem → proof → action ═══════════ */}
+      <div id="main">
+      <WhyPitchIQ />
+      <DashboardAssembly />
+      <SeasonTimeline />
+      <PitchIntelligence />
+      <FloatingStats />
+      <AIReveal />
+      <TrainingPlanDemo />
+      <RecruitCard onCta={signIn} />
+      <Transformations />
 
       {/* ── 06 / PRICING ──────────────────────────────────────────────────── */}
       <section style={{ borderBottom: `1px solid ${BORDER}` }} className="px-6 lg:px-10 py-28">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p style={sectionLabel} className="mb-4 uppercase">06 / Pricing</p>
+            <p style={sectionLabel} className="mb-4 uppercase">10 / Pricing</p>
           </Reveal>
           <MaskedLines as="h2" delay={0.05}
             style={{ ...h2Style, fontSize: 'clamp(2.5rem,5vw,4rem)', marginBottom: '4rem' }}
@@ -645,31 +396,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── FINAL CTA — inverted block ────────────────────────────────────── */}
-      <section style={{ background: ACCENT }} className="px-6 lg:px-10 py-28">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-end">
-          <MaskedLines as="h2"
-            style={{ ...BC, fontSize: 'clamp(3rem,7vw,5.5rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 0.88, color: BASE }}
-            lines={['YOUR NEXT', 'LEVEL STARTS', 'NOW.']} />
-          <Reveal delay={0.12}>
-            <p style={{ ...B, color: '#3a1208', fontSize: '1rem', lineHeight: 1.7, marginBottom: '2rem' }}>
-              Join hundreds of competitive youth players who track their development with PitchIQ. Free to start — takes 2 minutes to set up.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Magnetic strength={0.15}>
-                <button onClick={signIn} className="transition-transform active:scale-95"
-                  style={{ ...BC, fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', background: BASE, color: ACCENT, padding: '14px 28px', border: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <GoogleIcon /> SIGN UP FREE
-                </button>
-              </Magnetic>
-              <button onClick={demo} className="hover:bg-black/10 transition-colors"
-                style={{ ...BC, fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.08em', background: 'transparent', color: BASE, padding: '14px 28px', border: `1px solid rgba(0,0,0,0.3)` }}>
-                VIEW DEMO FIRST
-              </button>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <FinalCTA onSignIn={signIn} onDemo={demo} />
+      </div>
 
       {/* ── FOOTER ────────────────────────────────────────────────────────── */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '2rem 1.5rem' }} className="lg:px-10">

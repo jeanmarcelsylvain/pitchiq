@@ -69,7 +69,7 @@ export function Counter({ to, suffix = '', decimals = 0 }: {
     const dur = 1800, start = performance.now()
     let raf: number
     const tick = (t: number) => {
-      const p = Math.min((t - start) / dur, 1)
+      const p = Math.min(Math.max((t - start) / dur, 0), 1)
       setN((1 - Math.pow(1 - p, 3)) * to)
       if (p < 1) raf = requestAnimationFrame(tick)
     }
