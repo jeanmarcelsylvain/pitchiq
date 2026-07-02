@@ -1,197 +1,299 @@
-import { useRef } from 'react'
+/* ═══ Recruit Profile OS ══════════════════════════════════════════════════
+   The editable, private side of the flagship public profile. Everything
+   here feeds the shareable ScoutView — hero, story, milestones, and
+   per-section visibility controls live here; the public page just renders
+   what's toggled on. */
+import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Copy, Check, Download, Plus, X, Eye, EyeOff, Trophy, Star, Sparkles } from 'lucide-react'
 import { useAppData } from '@/hooks/useAppData'
 import { useAuth } from '@/hooks/useAuth'
-import { Download, Share2, Copy, Check } from 'lucide-react'
-import { useState } from 'react'
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
+import { useCareerMatches } from '@/hooks/useCareerMatches'
+import { color, font, ease } from '@/design/tokens'
+import { Counter } from '@/design/motion'
+import { ProgressRing } from '@/components/widgets/Widget'
+import { PerformanceDNA } from '@/components/analytics/PerformanceDNA'
+import { buildDNA, classifyStyle, buildPersonalRecords } from '@/lib/performanceIntel'
+import { buildHighlights } from '@/lib/matchIntel'
+import {
+  buildAISummary, buildSharePayload, encodePayload,
+  defaultVisibility, emptyStory, MILESTONE_CATEGORY_LABEL,
+  type RecruitStory, type Milestone, type VisibilitySettings,
+} from '@/lib/recruitProfile'
+
+const BC   = { fontFamily: font.display }
+const B    = { fontFamily: font.ui }
+const MONO = { fontFamily: font.mono }
+const sectionLabel = { ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: color.inkMuted } as const
+
+function storageKey(uid: string) { return `recruit_profile_${uid}` }
+
+interface RecruitExtras {
+  graduationYear?: number
+  story: RecruitStory
+  milestones: Milestone[]
+  visibility: VisibilitySettings
+}
 
 export default function RecruitProfile() {
-  const { profile, seasonStats, matches } = useAppData()
+  const { profile } = useAppData()
   const { user, isDemoMode } = useAuth()
-  const printRef = useRef<HTMLDivElement>(null)
-  const [copied, setCopied] = useState(false)
-
+  const { careerMatches } = useCareerMatches()
   const uid = isDemoMode ? 'demo' : user?.uid ?? ''
 
-  const totalGoals = matches.reduce((s, m) => s + m.goals, 0)
-  const totalAssists = matches.reduce((s, m) => s + m.assists, 0)
-  const wins = matches.filter(m => m.result === 'win').length
-  const winRate = matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0
+  const [extras, setExtras] = useState<RecruitExtras>(() => {
+    try {
+      const raw = localStorage.getItem(storageKey(uid))
+      if (raw) return JSON.parse(raw)
+    } catch { /* ignore */ }
+    return { story: emptyStory, milestones: [], visibility: defaultVisibility }
+  })
+  const [copied, setCopied] = useState(false)
+  const [editingStory, setEditingStory] = useState(false)
+  const [newMilestone, setNewMilestone] = useState({ title: '', category: 'performance' as Milestone['category'] })
 
-  const radarData = [
-    { skill: 'Finishing', value: Math.min(100, totalGoals * 8 + 30) },
-    { skill: 'Passing', value: seasonStats.avgPassAccuracy || 70 },
-    { skill: 'Pace', value: Math.min(100, (seasonStats.avgSprintSpeed / 35) * 100) },
-    { skill: 'Consistency', value: Math.min(100, seasonStats.avgRating * 10) },
-    { skill: 'Creativity', value: Math.min(100, totalAssists * 10 + 30) },
-    { skill: 'Work Rate', value: Math.min(100, matches.length * 4 + 40) },
-  ]
-
-  const handlePrint = () => {
-    window.print()
+  const persist = (next: RecruitExtras) => {
+    setExtras(next)
+    localStorage.setItem(storageKey(uid), JSON.stringify(next))
   }
 
-  // Encode profile data into shareable URL
+  const dna = useMemo(() => buildDNA(careerMatches), [careerMatches])
+  const style = useMemo(() => classifyStyle(careerMatches, dna), [careerMatches, dna])
+  const overall = dna.length ? Math.round(dna.reduce((s, a) => s + a.value, 0) / dna.length) : 0
+  const records = useMemo(() => buildPersonalRecords(careerMatches), [careerMatches])
+  const highlights = useMemo(() => buildHighlights(careerMatches), [careerMatches])
+  const aiSummary = useMemo(() => buildAISummary(careerMatches, dna, style), [careerMatches, dna, style])
+
+  const wins = careerMatches.filter(m => m.result === 'win').length
+  const totalGoals = careerMatches.reduce((s, m) => s + m.goals, 0)
+  const totalAssists = careerMatches.reduce((s, m) => s + m.assists, 0)
+  const avgRating = careerMatches.length ? careerMatches.reduce((s, m) => s + m.rating, 0) / careerMatches.length : 0
+  const avgPassAcc = careerMatches.length ? Math.round(careerMatches.reduce((s, m) => s + m.passAccuracy, 0) / careerMatches.length) : 0
+  const avgDistance = careerMatches.length ? (careerMatches.reduce((s, m) => s + m.distanceCovered, 0) / careerMatches.length).toFixed(1) : '0'
+
   const handleShare = () => {
-    const data = {
-      name: profile.name,
-      position: profile.primaryPosition,
-      club: profile.club,
-      age: profile.age,
-      foot: profile.dominantFoot,
-      stats: {
-        matches: matches.length,
-        goals: totalGoals,
-        assists: totalAssists,
-        avgRating: seasonStats.avgRating,
-        avgPassAccuracy: seasonStats.avgPassAccuracy,
-        avgSprintSpeed: seasonStats.avgSprintSpeed,
-        winRate,
-      },
-    }
-    const encoded = btoa(JSON.stringify(data))
+    const payload = buildSharePayload(
+      { ...profile, graduationYear: extras.graduationYear }, careerMatches, dna, style,
+      extras.story, extras.milestones, extras.visibility
+    )
+    const encoded = encodePayload(payload)
     const url = `${window.location.origin}/scout/${encoded}`
     navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2500)
   }
 
+  const addMilestone = () => {
+    if (!newMilestone.title.trim()) return
+    const m: Milestone = { id: crypto.randomUUID(), title: newMilestone.title, date: new Date().toISOString().slice(0, 10), category: newMilestone.category }
+    persist({ ...extras, milestones: [m, ...extras.milestones] })
+    setNewMilestone({ title: '', category: 'performance' })
+  }
+  const removeMilestone = (id: string) => persist({ ...extras, milestones: extras.milestones.filter(m => m.id !== id) })
+  const toggleVisibility = (key: keyof VisibilitySettings) => persist({ ...extras, visibility: { ...extras.visibility, [key]: !extras.visibility[key] } })
+
+  const initials = profile.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'P'
+
   return (
     <div className="space-y-6 animate-slide-up">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Recruitment Profile</h1>
-          <p className="mt-1 text-sm text-slate-500">Share with coaches, scouts, and college programs</p>
+          <p style={sectionLabel} className="uppercase">Recruit Profile</p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold text-white">Your public showcase.</h1>
+          <p className="mt-1 text-sm text-slate-500">What a coach sees within 30 seconds — no login required.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:text-white transition-all"
-          >
+          <button onClick={handleShare}
+            className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:text-white transition-all">
             {copied ? <Check className="h-4 w-4 text-pitch-400" /> : <Copy className="h-4 w-4" />}
             {copied ? 'Link copied!' : 'Copy share link'}
           </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2 text-sm font-semibold text-white transition-all"
-          >
-            <Download className="h-4 w-4" />
-            Download PDF
+          <button onClick={() => window.print()}
+            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2 text-sm font-semibold text-white transition-all">
+            <Download className="h-4 w-4" /> Download PDF
           </button>
         </div>
       </div>
 
-      {/* Print-ready profile card */}
-      <div ref={printRef} className="print-profile rounded-2xl border border-slate-700 bg-slate-900 overflow-hidden">
-
-        {/* Header */}
-        <div className="bg-gradient-to-r from-pitch-900/60 to-slate-900 border-b border-slate-800 px-8 py-8">
-          <div className="flex items-start gap-6">
-            <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-pitch-600/20 text-3xl font-bold text-pitch-400 border border-pitch-600/30">
-              {profile.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'P'}
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }}
+        className="relative overflow-hidden rounded-2xl border border-slate-800/80 p-6 lg:p-8"
+        style={{ background: 'linear-gradient(135deg, rgba(23,28,56,0.92), rgba(10,13,28,0.97) 60%)' }}>
+        <div aria-hidden className="pointer-events-none absolute -top-24 right-10 h-64 w-64 rounded-full bg-pitch-600/10 blur-3xl" />
+        <div className="relative grid gap-8 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl text-3xl font-black"
+            style={{ ...BC, background: 'rgba(255,90,60,0.14)', border: `1px solid rgba(255,90,60,0.3)`, color: color.accentSoft }}>
+            {initials}
+          </div>
+          <div>
+            <h2 className="font-display text-3xl font-extrabold text-white">{profile.name ?? 'Player'}</h2>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="rounded-lg px-2.5 py-1 text-xs font-bold" style={{ ...BC, background: 'rgba(255,90,60,0.16)', color: color.accentSoft }}>{profile.primaryPosition}</span>
+              {profile.secondaryPosition && <span className="rounded-lg px-2.5 py-1 text-xs font-semibold" style={{ ...BC, background: color.surface, color: color.inkMuted, border: `1px solid ${color.border}` }}>{profile.secondaryPosition}</span>}
+              {profile.club && <span style={{ ...B, fontSize: '0.8rem', color: color.inkMuted }}>{profile.club}</span>}
             </div>
-            <div className="flex-1">
-              <h2 className="text-3xl font-extrabold text-white">{profile.name ?? 'Player'}</h2>
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                <span className="rounded-lg bg-pitch-600/20 border border-pitch-600/30 px-3 py-1 text-sm font-semibold text-pitch-400">
-                  {profile.primaryPosition ?? 'N/A'}
-                </span>
-                {profile.club && (
-                  <span className="text-sm text-slate-400">{profile.club}</span>
-                )}
-                {profile.age && (
-                  <span className="text-sm text-slate-400">Age {profile.age}</span>
-                )}
-                {profile.dominantFoot && (
-                  <span className="text-sm text-slate-400">{profile.dominantFoot} foot</span>
-                )}
-              </div>
-            </div>
-            <div className="text-right hidden sm:block">
-              <p className="text-xs text-slate-600 uppercase tracking-widest">Generated by</p>
-              <p className="text-sm font-bold text-pitch-400">MyFutbolPro</p>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1" style={{ ...MONO, fontSize: '0.72rem', color: color.inkMuted }}>
+              {profile.age && <span>Age {profile.age}</span>}
+              {extras.graduationYear && <span>Class of {extras.graduationYear}</span>}
+              {profile.height && <span>{profile.height}cm</span>}
+              {profile.weight && <span>{profile.weight}kg</span>}
+              {profile.dominantFoot && <span>{profile.dominantFoot} foot</span>}
+              {profile.nationality && <span>{profile.nationality}</span>}
             </div>
           </div>
+          <div className="flex flex-col items-center gap-1 justify-self-center lg:justify-self-end">
+            <ProgressRing value={overall} max={100} size={110} stroke={6}
+              label={<span className="font-display text-3xl font-extrabold text-white"><Counter to={overall} /></span>} sub="overall" />
+          </div>
         </div>
+      </motion.div>
 
-        {/* Stats grid */}
-        <div className="px-8 py-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Season Statistics</p>
-          <div className="grid grid-cols-3 gap-4 lg:grid-cols-6">
-            {[
-              { label: 'Matches', value: matches.length },
-              { label: 'Goals', value: totalGoals },
-              { label: 'Assists', value: totalAssists },
-              { label: 'Avg Rating', value: `${seasonStats.avgRating.toFixed(1)}/10` },
-              { label: 'Pass Acc.', value: `${seasonStats.avgPassAccuracy}%` },
-              { label: 'Win Rate', value: `${winRate}%` },
-            ].map(({ label, value }) => (
-              <div key={label} className="text-center rounded-xl border border-slate-800 bg-slate-800/40 p-4">
-                <p className="text-2xl font-extrabold text-white">{value}</p>
-                <p className="text-xs text-slate-500 mt-1">{label}</p>
+      {/* ── QUICK SNAPSHOT ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        {[
+          ['Matches', careerMatches.length], ['Season Rtg', avgRating.toFixed(1)], ['Goals', totalGoals], ['Assists', totalAssists],
+          ['Pass Acc', `${avgPassAcc}%`], ['Distance', `${avgDistance}km`], ['Win Rate', careerMatches.length ? `${Math.round((wins / careerMatches.length) * 100)}%` : '—'],
+        ].map(([l, v]) => (
+          <div key={l as string} className="rounded-xl p-3.5 text-center" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+            <p style={{ ...BC, fontSize: '1.3rem', fontWeight: 800, color: color.ink }}>{v}</p>
+            <p style={{ ...B, fontSize: '0.62rem', color: color.inkMuted }}>{l}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── PERFORMANCE DNA + AI SUMMARY ─────────────────────────────────── */}
+      <div className="grid lg:grid-cols-[1.3fr_1fr] gap-5">
+        <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+          <p style={sectionLabel} className="uppercase mb-4">Performance DNA</p>
+          {dna.length > 0 ? <PerformanceDNA attributes={dna} /> : <EmptySection text="Log matches to build a Performance DNA profile." />}
+        </div>
+        <VisibilityCard title="AI Scouting Summary" enabled={extras.visibility.aiSummary} onToggle={() => toggleVisibility('aiSummary')}>
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4" style={{ color: color.ai }} />
+            <p style={{ ...BC, fontSize: '1rem', fontWeight: 700, color: color.ink }}>{aiSummary.playingIdentity}</p>
+          </div>
+          <div className="space-y-1.5 mb-4">
+            {aiSummary.strengths.map((s, i) => (
+              <p key={i} style={{ ...B, fontSize: '0.78rem', color: color.inkDim, lineHeight: 1.5 }}>
+                <span style={{ color: s.evidenceBased ? color.emerald : color.warn }}>●</span> {s.text}
+              </p>
+            ))}
+          </div>
+          <p style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.1em', color: color.inkMuted }} className="uppercase mb-1">Development Focus</p>
+          <p style={{ ...B, fontSize: '0.78rem', color: color.inkDim, lineHeight: 1.5 }}>{aiSummary.futureFocus}</p>
+        </VisibilityCard>
+      </div>
+
+      {/* ── PLAYER STORY ──────────────────────────────────────────────────── */}
+      <VisibilityCard title="Player Story" enabled={extras.visibility.story} onToggle={() => toggleVisibility('story')}>
+        {editingStory ? (
+          <div className="space-y-3">
+            {(['journey', 'currentGoals', 'developmentFocus', 'ambitions'] as const).map(field => (
+              <div key={field}>
+                <label style={{ ...B, fontSize: '0.7rem', color: color.inkMuted }} className="block mb-1 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                <textarea rows={2} value={extras.story[field]}
+                  onChange={e => setExtras(prev => ({ ...prev, story: { ...prev.story, [field]: e.target.value } }))}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
+                  style={{ ...B, color: color.ink, background: color.bg, border: `1px solid ${color.border}` }} />
+              </div>
+            ))}
+            <button onClick={() => { persist(extras); setEditingStory(false) }}
+              className="rounded-lg px-3 py-1.5 text-xs font-bold" style={{ ...BC, background: color.accent, color: color.bg }}>Save Story</button>
+          </div>
+        ) : (
+          <div>
+            {Object.values(extras.story).some(v => v) ? (
+              <div className="space-y-3">
+                {extras.story.journey && <p style={{ ...B, fontSize: '0.85rem', color: color.inkDim, lineHeight: 1.65 }}>{extras.story.journey}</p>}
+                {extras.story.currentGoals && <p style={{ ...B, fontSize: '0.82rem', color: color.inkMuted, lineHeight: 1.6 }}><strong style={{ color: color.inkDim }}>Current goals: </strong>{extras.story.currentGoals}</p>}
+                {extras.story.ambitions && <p style={{ ...B, fontSize: '0.82rem', color: color.inkMuted, lineHeight: 1.6 }}><strong style={{ color: color.inkDim }}>Ambitions: </strong>{extras.story.ambitions}</p>}
+              </div>
+            ) : <p style={{ ...B, fontSize: '0.82rem', color: color.inkMuted }}>Add your story so recruiters understand who you are, not just your stats.</p>}
+            <button onClick={() => setEditingStory(true)} className="mt-3 text-xs font-semibold" style={{ ...BC, color: color.accentSoft }}>Edit Story</button>
+          </div>
+        )}
+      </VisibilityCard>
+
+      {/* ── HIGHLIGHTS TIMELINE ──────────────────────────────────────────── */}
+      <VisibilityCard title="Career Highlights" enabled={extras.visibility.highlights} onToggle={() => toggleVisibility('highlights')}>
+        <div className="flex flex-wrap gap-2 mb-4">
+          <input value={newMilestone.title} onChange={e => setNewMilestone(p => ({ ...p, title: e.target.value }))}
+            placeholder="e.g. Team Captain, State Champion" onKeyDown={e => e.key === 'Enter' && addMilestone()}
+            className="flex-1 min-w-[200px] rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ ...B, color: color.ink, background: color.bg, border: `1px solid ${color.border}` }} />
+          <select value={newMilestone.category} onChange={e => setNewMilestone(p => ({ ...p, category: e.target.value as Milestone['category'] }))}
+            className="rounded-lg px-2 py-2 text-xs" style={{ ...B, background: color.bg, color: color.ink, border: `1px solid ${color.border}` }}>
+            {Object.entries(MILESTONE_CATEGORY_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+          <button onClick={addMilestone} className="rounded-lg px-3 flex items-center" style={{ background: color.accent, color: color.bg }} aria-label="Add milestone"><Plus className="h-4 w-4" /></button>
+        </div>
+        {extras.milestones.length === 0 ? <EmptySection text="Add milestones like captaincy, championships, and awards." /> : (
+          <div className="space-y-2">
+            {extras.milestones.map(m => (
+              <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg p-3" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
+                <div className="flex items-center gap-2.5">
+                  <Trophy className="h-4 w-4 shrink-0" style={{ color: '#ffba08' }} />
+                  <div>
+                    <p style={{ ...BC, fontSize: '0.85rem', fontWeight: 700, color: color.ink }}>{m.title}</p>
+                    <p style={{ ...B, fontSize: '0.65rem', color: color.inkMuted }}>{MILESTONE_CATEGORY_LABEL[m.category]} · {m.date}</p>
+                  </div>
+                </div>
+                <button onClick={() => removeMilestone(m.id)} aria-label={`Remove ${m.title}`} style={{ color: color.inkMuted }} className="hover:text-white"><X className="h-4 w-4" /></button>
               </div>
             ))}
           </div>
-        </div>
+        )}
+      </VisibilityCard>
 
-        {/* Radar + recent form */}
-        <div className="grid gap-6 px-8 pb-8 lg:grid-cols-2">
-          {/* Radar */}
-          <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Skill Profile</p>
-            <ResponsiveContainer width="100%" height={220}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="#1e293b" />
-                <PolarAngleAxis dataKey="skill" tick={{ fill: '#64748b', fontSize: 11 }} />
-                <Radar dataKey="value" stroke="#ff5a3c" fill="#ff5a3c" fillOpacity={0.15} strokeWidth={2} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Recent form */}
-          <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Recent Form</p>
-            {matches.length === 0 ? (
-              <p className="text-sm text-slate-600 text-center py-8">No matches logged yet</p>
-            ) : (
-              <div className="space-y-2">
-                {matches.slice(0, 6).map((m, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className={`h-5 w-5 flex items-center justify-center rounded text-xs font-bold ${
-                        m.result === 'win' ? 'bg-pitch-600/20 text-pitch-400' :
-                        m.result === 'draw' ? 'bg-yellow-600/20 text-yellow-400' :
-                        'bg-red-600/20 text-red-400'
-                      }`}>{m.result === 'win' ? 'W' : m.result === 'draw' ? 'D' : 'L'}</span>
-                      <span className="text-slate-400 text-xs">{m.opponent ?? 'Opponent'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span>{m.goals}G {m.assists}A</span>
-                      <span className="text-white font-semibold">{m.rating}/10</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-slate-800 px-8 py-4 flex items-center justify-between">
-          <p className="text-xs text-slate-600">Generated by MyFutbolPro · myfutbolpro.vercel.app</p>
-          <p className="text-xs text-slate-600">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
-        </div>
+      {/* ── MATCH HIGHLIGHTS + TROPHY ROOM ───────────────────────────────── */}
+      <div className="grid lg:grid-cols-2 gap-5">
+        <VisibilityCard title="Match Highlights" enabled={extras.visibility.matchHighlights} onToggle={() => toggleVisibility('matchHighlights')}>
+          {highlights.length === 0 ? <EmptySection text="Log more matches to surface highlights." /> : (
+            <div className="grid grid-cols-2 gap-2.5">
+              {highlights.map(h => (
+                <div key={h.label} className="rounded-lg p-3" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
+                  <p style={{ ...BC, fontSize: '0.55rem', letterSpacing: '0.1em', color: color.inkMuted }}>{h.label.toUpperCase()}</p>
+                  <p style={{ ...BC, fontSize: '1.1rem', fontWeight: 800, color: color.accentSoft }}>{h.value}</p>
+                  <p style={{ ...B, fontSize: '0.6rem', color: color.inkMuted }}>vs {h.match.opponent}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </VisibilityCard>
+        <VisibilityCard title="Trophy Room Preview" enabled={extras.visibility.trophyRoom} onToggle={() => toggleVisibility('trophyRoom')}>
+          {records.length === 0 ? <EmptySection text="Personal records will appear here." /> : (
+            <div className="grid grid-cols-3 gap-2.5">
+              {records.slice(0, 3).map(r => (
+                <div key={r.label} className="rounded-lg p-3 text-center" style={{ background: 'linear-gradient(180deg, rgba(255,186,8,0.08), transparent)', border: `1px solid ${color.border}` }}>
+                  <Star className="h-3.5 w-3.5 mx-auto mb-1" style={{ color: '#ffba08' }} />
+                  <p style={{ ...BC, fontSize: '1rem', fontWeight: 800, color: color.ink }}>{r.value}</p>
+                  <p style={{ ...B, fontSize: '0.58rem', color: color.inkMuted }}>{r.label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </VisibilityCard>
       </div>
-
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          .print-profile, .print-profile * { visibility: visible; }
-          .print-profile { position: absolute; left: 0; top: 0; width: 100%; border: none !important; }
-          nav, header, aside { display: none !important; }
-        }
-      `}</style>
     </div>
   )
+}
+
+function VisibilityCard({ title, enabled, onToggle, children }: { title: string; enabled: boolean; onToggle: () => void; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}`, opacity: enabled ? 1 : 0.6 }}>
+      <div className="flex items-center justify-between mb-4">
+        <p style={sectionLabel} className="uppercase">{title}</p>
+        <button onClick={onToggle} aria-pressed={enabled}
+          className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
+          style={{ ...BC, background: enabled ? 'rgba(45,212,160,0.1)' : 'rgba(154,151,184,0.1)', color: enabled ? color.emerald : color.inkMuted, border: `1px solid ${enabled ? 'rgba(45,212,160,0.3)' : color.border}` }}>
+          {enabled ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />} {enabled ? 'Public' : 'Hidden'}
+        </button>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function EmptySection({ text }: { text: string }) {
+  return <p style={{ ...B, fontSize: '0.8rem', color: color.inkMuted }}>{text}</p>
 }
