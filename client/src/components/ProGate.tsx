@@ -43,7 +43,7 @@ export default function ProGate({ children, feature = 'This feature' }: ProGateP
           </div>
           <h2 className="text-lg font-bold text-white mb-1">Pro Feature</h2>
           <p className="text-sm text-slate-400 mb-6">
-            {feature} is available on MyFutbolPro Pro. Upgrade to unlock AI coaching, training plans, injury assessment, and recruitment tools.
+            {feature} is available on PitchIQ Pro. Upgrade to unlock AI coaching, training plans, injury assessment, and recruitment tools.
           </p>
           <button onClick={handleUpgrade} disabled={checkoutLoading}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 disabled:opacity-70 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-pitch-900/30 mb-3">

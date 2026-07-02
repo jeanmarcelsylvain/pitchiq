@@ -33,7 +33,7 @@ const navGroups = [
   {
     label: 'Performance Lab',
     items: [
-      { to: '/ai-coach',  icon: Sparkles,   label: 'AI Coach',       highlight: true },
+      { to: '/ai-coach',  icon: Sparkles,   label: 'Performance Lab', highlight: true },
       { to: '/training',  icon: Dumbbell,   label: 'Training Plans', highlight: true },
       { to: '/injuries',  icon: HeartPulse, label: 'Recovery' },
     ],

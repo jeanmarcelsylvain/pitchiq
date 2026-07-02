@@ -17,7 +17,7 @@ const Matches         = lazy(() => import('@/pages/Matches'))
 const Analytics       = lazy(() => import('@/pages/Analytics'))
 const Goals           = lazy(() => import('@/pages/Goals'))
 const Profile         = lazy(() => import('@/pages/Profile'))
-const AICoach         = lazy(() => import('@/pages/AICoach'))
+const PerformanceLab   = lazy(() => import('@/pages/PerformanceLab'))
 const Achievements    = lazy(() => import('@/pages/Achievements'))
 const RecruitProfile  = lazy(() => import('@/pages/RecruitProfile'))
 const Highlights      = lazy(() => import('@/pages/Highlights'))
@@ -89,7 +89,7 @@ function AppRoutes() {
       <Route path="/seasons"      element={<ProtectedRoute><SeasonArchive /></ProtectedRoute>} />
 
       {/* Pro-gated routes */}
-      <Route path="/ai-coach"  element={<ProtectedRoute><ProGate feature="AI Coach"><AICoach /></ProGate></ProtectedRoute>} />
+      <Route path="/ai-coach"  element={<ProtectedRoute><ProGate feature="AI Coach"><PerformanceLab /></ProGate></ProtectedRoute>} />
       <Route path="/training"  element={<ProtectedRoute><ProGate feature="Training Plan Generator"><TrainingPlan /></ProGate></ProtectedRoute>} />
       <Route path="/injuries"  element={<ProtectedRoute><ProGate feature="Injury Tracker"><Injuries /></ProGate></ProtectedRoute>} />
       <Route path="/recruit"   element={<ProtectedRoute><ProGate feature="Recruitment Profile"><RecruitProfile /></ProGate></ProtectedRoute>} />

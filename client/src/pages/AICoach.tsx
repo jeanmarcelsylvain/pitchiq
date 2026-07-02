@@ -1147,7 +1147,7 @@ export default function AICoach() {
           </div>
           <div>
             <h1 className="text-sm font-bold text-white">AI Performance Coach</h1>
-            <p className="text-xs text-slate-500">{position} training plan · Powered by MyFutbolPro</p>
+            <p className="text-xs text-slate-500">{position} training plan · Powered by PitchIQ</p>
           </div>
         </div>
         <Button variant="ghost" onClick={restart} className="text-xs gap-1.5">
