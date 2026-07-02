@@ -1,81 +1,98 @@
-import { useState } from 'react'
+/* ═══ Performance Intelligence ════════════════════════════════════════════
+   The analytics room. Every section answers one of four questions: why did
+   this happen, why is it changing, what should I improve, what should I
+   focus on before my next match. Nothing here is decoration — every chart
+   traces back to real logged match fields via src/lib/performanceIntel.ts. */
+import { useMemo } from 'react'
 import {
-  LineChart, Line, BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart
+  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { useAppData } from '@/hooks/useAppData'
 import { useNavigate } from 'react-router-dom'
-import { BarChart2, Plus } from 'lucide-react'
+import { BarChart2, Plus, Dumbbell, ArrowUpRight } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Widget, ProgressRing } from '@/components/widgets/Widget'
+import { Counter } from '@/design/motion'
+import { color, font, ease } from '@/design/tokens'
+import { useAppData } from '@/hooks/useAppData'
+import { buildDNA, classifyStyle, detectPatterns, DNA_LABELS } from '@/lib/performanceIntel'
+import { PerformanceDNA } from '@/components/analytics/PerformanceDNA'
+import { PlayingStyleCard } from '@/components/analytics/PlayingStyle'
+import { PositionPitch } from '@/components/analytics/PositionPitch'
+import { InsightCards } from '@/components/analytics/InsightCards'
+import { ShootingFunnel } from '@/components/analytics/ShootingFunnel'
+import { motion } from 'framer-motion'
 
-type MetricKey = 'goals' | 'assists' | 'passAcc' | 'rating' | 'speed' | 'distance'
+const BC   = { fontFamily: font.display }
+const B    = { fontFamily: font.ui }
+const MONO = { fontFamily: font.mono }
 
-const metrics: { key: MetricKey; label: string; color: string }[] = [
-  { key: 'goals', label: 'Goals', color: '#ff5a3c' },
-  { key: 'assists', label: 'Assists', color: '#3b82f6' },
-  { key: 'passAcc', label: 'Pass Accuracy', color: '#a855f7' },
-  { key: 'rating', label: 'Performance Rating', color: '#f59e0b' },
-  { key: 'speed', label: 'Sprint Speed', color: '#ec4899' },
-  { key: 'distance', label: 'Distance Covered', color: '#06b6d4' },
-]
+/* chart theme shared by every recharts instance on this page */
+const gridStroke = 'rgba(37,43,77,0.6)'
+const tickStyle = { fill: '#8a86a8', fontSize: 11 }
+const tooltipStyle = { background: '#171c38', border: `1px solid ${color.border}`, borderRadius: 10, color: color.ink, fontSize: 12 }
 
-const TooltipContent = ({ active, payload, label }: { active?: boolean; payload?: { value: number; name: string }[]; label?: string }) => {
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name: string; color?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 shadow-xl text-xs">
-      <p className="text-slate-400 mb-1">{label}</p>
+    <div style={tooltipStyle} className="px-3 py-2 shadow-xl">
+      <p style={{ ...B, color: color.inkMuted, marginBottom: 4 }}>{label}</p>
       {payload.map(p => (
-        <p key={p.name} className="text-white font-medium">{p.name}: <span className="text-pitch-400">{p.value}</span></p>
+        <p key={p.name} style={{ ...B, color: color.ink, fontWeight: 600 }}>
+          {p.name}: <span style={{ color: p.color ?? color.accent }}>{p.value}</span>
+        </p>
       ))}
     </div>
   )
 }
 
-export default function Analytics() {
-  const { matches, seasonStats } = useAppData()
-  const navigate = useNavigate()
-  const [activeMetric, setActiveMetric] = useState<MetricKey>('rating')
+const sectionLabel = { ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: color.inkMuted } as const
 
-  const sorted = [...matches].sort((a, b) => a.date.localeCompare(b.date))
+export default function Analytics() {
+  const { matches } = useAppData()
+  const navigate = useNavigate()
+
+  const sorted = useMemo(() => [...matches].sort((a, b) => a.date.localeCompare(b.date)), [matches])
+
+  const dna = useMemo(() => buildDNA(matches), [matches])
+  const style = useMemo(() => classifyStyle(matches, dna), [matches, dna])
+  const patterns = useMemo(() => detectPatterns(matches), [matches])
 
   const chartData = sorted.map(m => ({
-    date: m.date.slice(5),
-    goals: m.goals,
-    assists: m.assists,
-    passAcc: m.passAccuracy,
-    rating: m.rating,
-    speed: m.sprintSpeed,
-    distance: m.distanceCovered,
-    opponent: m.opponent,
+    date: m.date.slice(5), rating: m.rating, goals: m.goals, assists: m.assists,
+    passAcc: m.passAccuracy, distance: m.distanceCovered, speed: m.sprintSpeed,
   }))
 
-  const radarData = matches.length > 0 ? [
-    { metric: 'Scoring', value: Math.min(99, Math.round((seasonStats.goalsPerGame / 1.5) * 100)) },
-    { metric: 'Passing', value: Math.round(seasonStats.avgPassAccuracy) },
-    { metric: 'Fitness', value: Math.min(99, Math.round((seasonStats.avgSprintSpeed / 35) * 100)) },
-    { metric: 'Speed', value: Math.min(99, Math.round((seasonStats.avgSprintSpeed / 35) * 100)) },
-    { metric: 'Stamina', value: Math.min(99, Math.round((seasonStats.totalDistance / (matches.length * 12)) * 100)) },
-    { metric: 'Rating', value: Math.round(seasonStats.avgRating * 10) },
-  ] : []
+  const overall = dna.length ? Math.round(dna.reduce((s, a) => s + a.value, 0) / dna.length) : 0
+  const recentForm = sorted.slice(-5)
+  const recentAvg = recentForm.length ? recentForm.reduce((s, m) => s + m.rating, 0) / recentForm.length : 0
+  const seasonAvg = matches.length ? matches.reduce((s, m) => s + m.rating, 0) / matches.length : 0
+  const formDelta = recentAvg - seasonAvg
+  const consistency = dna.find(a => a.key === 'composure')?.value ?? 0
 
-  const selected = metrics.find(m => m.key === activeMetric)!
+  const totalShots = matches.reduce((s, m) => s + m.shots, 0)
+  const totalOnTarget = matches.reduce((s, m) => s + m.shotsOnTarget, 0)
+  const totalGoals = matches.reduce((s, m) => s + m.goals, 0)
+  const totalTackles = matches.reduce((s, m) => s + m.tackles, 0)
+  const totalInterceptions = matches.reduce((s, m) => s + m.interceptions, 0)
+
+  const weakestAttr = dna.length ? [...dna].sort((a, b) => a.value - b.value)[0] : null
 
   if (matches.length === 0) {
     return (
       <div className="space-y-6 animate-slide-up">
         <div>
-          <h1 className="text-2xl font-bold text-white">Analytics</h1>
-          <p className="mt-1 text-sm text-slate-500">Visualize your performance trends across all metrics</p>
+          <p style={sectionLabel} className="uppercase">Performance Intel</p>
+          <h1 className="mt-1 text-2xl font-bold text-white">No data yet</h1>
         </div>
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600/20 mb-6">
             <BarChart2 className="h-8 w-8 text-blue-400" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">No data yet</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Your intelligence engine needs data</h2>
           <p className="text-slate-500 max-w-sm mb-8 leading-relaxed">
-            Your charts and analytics will appear here once you've logged at least one match.
+            Performance DNA, playing style, and pattern detection all build from your logged matches. Log your first one to switch this on.
           </p>
           <Button variant="primary" size="lg" onClick={() => navigate('/matches')}>
             <Plus className="h-4 w-4" /> Log a Match
@@ -86,180 +103,219 @@ export default function Analytics() {
   }
 
   return (
-    <div className="space-y-6 animate-slide-up">
+    <div className="space-y-5 animate-slide-up">
       <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="mt-1 text-sm text-slate-500">Visualize your performance trends across all metrics</p>
+        <p style={sectionLabel} className="uppercase">Performance Intel</p>
+        <h1 className="mt-1 font-display text-2xl font-extrabold text-white">Understand your game.</h1>
+        <p className="mt-1 text-sm text-slate-500">Not statistics — intelligence, drawn from {matches.length} logged matches.</p>
       </div>
 
-      {/* Metric selector */}
-      <div className="flex flex-wrap gap-2">
-        {metrics.map(m => (
-          <button
-            key={m.key}
-            onClick={() => setActiveMetric(m.key)}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
-              activeMetric === m.key
-                ? 'border-pitch-600/50 bg-pitch-600/20 text-pitch-400'
-                : 'border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
-            }`}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
+      {/* ── 1 · PERFORMANCE OVERVIEW ────────────────────────────────────── */}
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease }}
+        className="relative overflow-hidden rounded-2xl border border-slate-800/80 p-6 lg:p-8"
+        style={{ background: 'linear-gradient(135deg, rgba(23,28,56,0.9), rgba(10,13,28,0.95) 60%)' }}>
+        <div aria-hidden className="pointer-events-none absolute -top-24 right-10 h-64 w-64 rounded-full bg-pitch-600/10 blur-3xl" />
+        <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p style={sectionLabel} className="uppercase mb-2">Overview</p>
+            <h2 className="font-display text-2xl font-extrabold text-white">Overall Performance</h2>
+            <div className="mt-5 grid grid-cols-3 gap-6 max-w-md">
+              <div>
+                <p style={{ ...BC, fontSize: '1.5rem', fontWeight: 800, color: formDelta >= 0 ? color.emerald : color.warn }}>
+                  {formDelta >= 0 ? '+' : ''}{formDelta.toFixed(1)}
+                </p>
+                <p style={{ ...B, fontSize: '0.68rem', color: color.inkMuted }}>Current form vs. season</p>
+              </div>
+              <div>
+                <p style={{ ...BC, fontSize: '1.5rem', fontWeight: 800, color: color.ink }}>{seasonAvg.toFixed(1)}</p>
+                <p style={{ ...B, fontSize: '0.68rem', color: color.inkMuted }}>Season avg rating</p>
+              </div>
+              <div>
+                <p style={{ ...BC, fontSize: '1.5rem', fontWeight: 800, color: color.ink }}>{consistency.toFixed(0)}</p>
+                <p style={{ ...B, fontSize: '0.68rem', color: color.inkMuted }}>Consistency score</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-2 justify-self-center lg:justify-self-end">
+            <ProgressRing value={overall} max={100} size={140} stroke={7}
+              label={<span className="font-display text-4xl font-extrabold text-white stat-number"><Counter to={overall} /></span>}
+              sub="overall" />
+          </div>
+        </div>
+      </motion.section>
 
-      {/* Primary chart */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{selected.label} Over Time</CardTitle>
-          <Badge variant="info">{matches.length} Matches</Badge>
-        </CardHeader>
-        <CardContent className="pt-2">
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+      {/* ── 2 · PERFORMANCE DNA ─────────────────────────────────────────── */}
+      <Widget title="Performance DNA" badge={<Badge variant="info">Signature</Badge>}>
+        <div className="px-5 pb-6 pt-2">
+          <PerformanceDNA attributes={dna} />
+        </div>
+      </Widget>
+
+      {/* ── 3 · PLAYING STYLE ────────────────────────────────────────────── */}
+      {style && (
+        <Widget title="Playing Style">
+          <div className="px-5 pb-5">
+            <PlayingStyleCard style={style} />
+          </div>
+        </Widget>
+      )}
+
+      {/* ── 4 · SEASON TRENDS ────────────────────────────────────────────── */}
+      <Widget title="Season Trends" badge={<Badge variant="outline">{matches.length} matches</Badge>}>
+        <div className="px-3 pb-4 pt-1">
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorMetric" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={selected.color} stopOpacity={0.2} />
-                  <stop offset="95%" stopColor={selected.color} stopOpacity={0} />
+                <linearGradient id="ratingGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color.accent} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={color.accent} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" />
-              <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#5c4888', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<TooltipContent />} />
-              <Area
-                type="monotone"
-                dataKey={activeMetric}
-                name={selected.label}
-                stroke={selected.color}
-                fill="url(#colorMetric)"
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: selected.color, strokeWidth: 0 }}
-                activeDot={{ r: 6 }}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+              <YAxis domain={[4, 10]} tick={tickStyle} axisLine={false} tickLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area type="monotone" dataKey="rating" name="Rating" stroke={color.accent} fill="url(#ratingGrad)" strokeWidth={2.5}
+                dot={{ r: 3.5, fill: color.accent, strokeWidth: 0 }} activeDot={{ r: 6 }}
+                animationDuration={1200} animationEasing="ease-out" />
             </AreaChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </Widget>
 
-      {/* Secondary grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Goals & Assists bar */}
-        <Card>
-          <CardHeader><CardTitle>Goals & Assists Per Match</CardTitle></CardHeader>
-          <CardContent className="pt-2">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip content={<TooltipContent />} />
-                <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
-                <Bar dataKey="goals" name="Goals" fill="#ff5a3c" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="assists" name="Assists" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* ── 5 · POSITION INTELLIGENCE ────────────────────────────────────── */}
+      <Widget title="Position Intelligence">
+        <div className="px-5 pb-6 pt-2">
+          <PositionPitch matches={matches} />
+        </div>
+      </Widget>
 
-        {/* Radar chart */}
-        <Card data-tour="radar-chart">
-          <CardHeader><CardTitle>Skill Radar</CardTitle></CardHeader>
-          <CardContent className="pt-2 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={220}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="#1d1530" />
-                <PolarAngleAxis dataKey="metric" tick={{ fill: '#64748b', fontSize: 11 }} />
-                <Radar name="Player" dataKey="value" stroke="#ff5a3c" fill="#ff5a3c" fillOpacity={0.15} strokeWidth={2} />
-                <Tooltip content={<TooltipContent />} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* ── 6 · TECHNICAL ANALYSIS ───────────────────────────────────────── */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Widget title="Shooting Conversion">
+          <div className="px-5 pb-5 pt-2">
+            <ShootingFunnel shots={totalShots} onTarget={totalOnTarget} goals={totalGoals} />
+          </div>
+        </Widget>
 
-        {/* Pass accuracy line */}
-        <Card>
-          <CardHeader><CardTitle>Pass Accuracy Trend</CardTitle></CardHeader>
-          <CardContent className="pt-2">
+        <Widget title="Passing Accuracy">
+          <div className="px-3 pb-4 pt-1">
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" />
-                <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[50, 100]} tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<TooltipContent />} />
-                <Line type="monotone" dataKey="passAcc" name="Pass Acc %" stroke="#a855f7" strokeWidth={2.5} dot={{ r: 3, fill: '#a855f7', strokeWidth: 0 }} />
-                <Line type="monotone" dataKey={() => 85} stroke="#3c3050" strokeWidth={1} strokeDasharray="4 4" dot={false} name="Target (85%)" />
+              <LineChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <YAxis domain={[40, 100]} tick={tickStyle} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Line type="monotone" dataKey="passAcc" name="Pass Acc %" stroke={color.ai} strokeWidth={2.5}
+                  dot={{ r: 3, fill: color.ai, strokeWidth: 0 }} animationDuration={1200} />
               </LineChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </div>
+        </Widget>
 
-        {/* Sprint speed */}
-        <Card>
-          <CardHeader><CardTitle>Sprint Speed Progress</CardTitle></CardHeader>
-          <CardContent className="pt-2">
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="speedGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ec4899" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1d1530" />
-                <XAxis dataKey="date" tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#5c4888', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<TooltipContent />} />
-                <Area type="monotone" dataKey="speed" name="Speed (km/h)" stroke="#ec4899" fill="url(#speedGrad)" strokeWidth={2.5} dot={{ r: 3, fill: '#ec4899', strokeWidth: 0 }} />
-              </AreaChart>
+        <Widget title="Defensive Actions" className="lg:col-span-2">
+          <div className="px-5 pb-5 pt-2">
+            <div className="grid grid-cols-2 gap-8 max-w-sm mb-1">
+              <div>
+                <p style={{ ...BC, fontSize: '2rem', fontWeight: 800, color: color.ink }}>{totalTackles}</p>
+                <p style={{ ...B, fontSize: '0.72rem', color: color.inkMuted }}>Tackles this season</p>
+              </div>
+              <div>
+                <p style={{ ...BC, fontSize: '2rem', fontWeight: 800, color: color.ink }}>{totalInterceptions}</p>
+                <p style={{ ...B, fontSize: '0.72rem', color: color.inkMuted }}>Interceptions</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-3 pb-4">
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={sorted.map(m => ({ date: m.date.slice(5), tackles: m.tackles, interceptions: m.interceptions }))}
+                margin={{ top: 8, right: 12, left: -18, bottom: 0 }} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <YAxis tick={tickStyle} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar dataKey="tackles" name="Tackles" fill={color.accent} radius={[3, 3, 0, 0]} animationDuration={1000} />
+                <Bar dataKey="interceptions" name="Interceptions" fill={color.ai} radius={[3, 3, 0, 0]} animationDuration={1000} />
+              </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </div>
+        </Widget>
       </div>
 
-      {/* Match breakdown table */}
-      <Card>
-        <CardHeader><CardTitle>Match-by-Match Breakdown</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-800">
-                  {['Date', 'Opponent', 'Result', 'Pos', 'Min', 'G', 'A', 'PA%', 'Speed', 'Rating'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {sorted.map(m => (
-                  <tr key={m.id} className="hover:bg-slate-800/20 transition-colors">
-                    <td className="px-4 py-3 text-xs text-slate-500">{m.date.slice(5)}</td>
-                    <td className="px-4 py-3 text-slate-200 font-medium">{m.opponent}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-bold ${m.result === 'win' ? 'text-pitch-400' : m.result === 'loss' ? 'text-red-400' : 'text-yellow-400'}`}>
-                        {m.result?.toUpperCase()}
-                        {m.teamScore !== undefined && ` ${m.teamScore}–${m.opponentScore}`}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3"><span className="text-xs text-slate-400 font-mono">{m.position}</span></td>
-                    <td className="px-4 py-3 text-slate-300">{m.minutesPlayed}'</td>
-                    <td className="px-4 py-3 text-pitch-400 font-semibold">{m.goals}</td>
-                    <td className="px-4 py-3 text-blue-400 font-semibold">{m.assists}</td>
-                    <td className="px-4 py-3 text-slate-300">{m.passAccuracy}%</td>
-                    <td className="px-4 py-3 text-slate-300">{m.sprintSpeed} km/h</td>
-                    <td className="px-4 py-3">
-                      <span className={`font-bold ${m.rating >= 8 ? 'text-pitch-400' : m.rating >= 6 ? 'text-yellow-400' : 'text-red-400'}`}>
-                        {m.rating.toFixed(1)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ── 7 · PHYSICAL ANALYSIS ─────────────────────────────────────────── */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Widget title="Distance Covered">
+          <div className="px-3 pb-4 pt-1">
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="distGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={color.emerald} stopOpacity={0.22} />
+                    <stop offset="95%" stopColor={color.emerald} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area type="monotone" dataKey="distance" name="Distance (km)" stroke={color.emerald} fill="url(#distGrad)" strokeWidth={2.5}
+                  dot={{ r: 3, fill: color.emerald, strokeWidth: 0 }} animationDuration={1200} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+        </Widget>
+
+        <Widget title="Sprint Speed">
+          <div className="px-3 pb-4 pt-1">
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="speedGrad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ff4d9e" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#ff4d9e" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
+                <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area type="monotone" dataKey="speed" name="Speed (km/h)" stroke="#ff4d9e" fill="url(#speedGrad2)" strokeWidth={2.5}
+                  dot={{ r: 3, fill: '#ff4d9e', strokeWidth: 0 }} animationDuration={1200} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Widget>
+      </div>
+
+      {/* ── 8 · AI PATTERN DETECTION ─────────────────────────────────────── */}
+      {patterns.length > 0 && (
+        <Widget title="AI Pattern Detection" badge={<Badge variant="info">{patterns.length} found</Badge>}>
+          <div className="px-5 pb-5 pt-2">
+            <InsightCards insights={patterns} />
+          </div>
+        </Widget>
+      )}
+
+      {/* ── 9 · FUTURE DEVELOPMENT ───────────────────────────────────────── */}
+      {weakestAttr && (
+        <Widget title="Future Development">
+          <div className="px-5 pb-5 pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between rounded-lg border p-4"
+            style={{ borderColor: 'rgba(77,159,255,0.2)', background: 'rgba(77,159,255,0.05)' }}>
+            <div>
+              <p style={{ ...BC, fontSize: '0.62rem', letterSpacing: '0.14em', color: color.ai, fontWeight: 700 }} className="mb-1">
+                PRIMARY FOCUS AREA
+              </p>
+              <p style={{ ...BC, fontSize: '1.1rem', fontWeight: 700, color: color.ink }}>
+                {DNA_LABELS[weakestAttr.key]} — {weakestAttr.value.toFixed(0)}/100
+              </p>
+              <p style={{ ...B, fontSize: '0.82rem', color: color.inkDim }} className="mt-1 max-w-md">{weakestAttr.improve}</p>
+            </div>
+            <Button variant="ai" size="md" onClick={() => navigate('/training')}>
+              <Dumbbell className="h-4 w-4" /> Build training plan <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </Widget>
+      )}
     </div>
   )
 }
