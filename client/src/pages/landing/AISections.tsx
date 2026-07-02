@@ -30,17 +30,21 @@ const FRAGMENTS: [number, number, string][] = [
 
 function Fragment({ p, sx, sy, text }: { p: MotionValue<number>; sx: number; sy: number; text: string }) {
   /* drift toward center — vw/vh units (element-relative % would collapse all
-     fragments onto the center point). They converge only 75% of the way and
-     dissolve while still spatially distinct, so no unreadable pile-up. */
-  const x = useTransform(p, [0, 0.38], [`${(sx - 50) * 0.9}vw`, `${(sx - 50) * 0.22}vw`])
-  const y = useTransform(p, [0, 0.38], [`${(sy - 50) * 0.7}vh`, `${(sy - 50) * 0.2}vh`])
-  const opacity = useTransform(p, [0, 0.06, 0.28, 0.38], [0, 0.9, 0.6, 0])
-  const scale = useTransform(p, [0, 0.38], [1, 0.6])
+     fragments onto the center point). Convergence is capped well short of
+     center so they stay spread across the full viewport for their entire
+     life instead of bunching into a small band mid-scroll, which is what
+     was leaving the screen mostly empty in the middle of the sequence. */
+  const x = useTransform(p, [0, 0.4], [`${(sx - 50) * 0.92}vw`, `${(sx - 50) * 0.55}vw`])
+  const y = useTransform(p, [0, 0.4], [`${(sy - 50) * 0.85}vh`, `${(sy - 50) * 0.5}vh`])
+  const opacity = useTransform(p, [0, 0.06, 0.3, 0.4], [0, 0.9, 0.6, 0])
+  const scale = useTransform(p, [0, 0.4], [1, 0.75])
   return (
-    <motion.span aria-hidden className="absolute left-1/2 top-1/2 whitespace-nowrap"
-      style={{ ...MONO, x, y, opacity, scale, fontSize: '0.7rem', color: color.inkDim }}>
-      {text}
-    </motion.span>
+    <span aria-hidden className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+      <motion.span className="block whitespace-nowrap"
+        style={{ ...MONO, x, y, opacity, scale, fontSize: '0.7rem', color: color.inkDim }}>
+        {text}
+      </motion.span>
+    </span>
   )
 }
 
@@ -56,15 +60,19 @@ export function AIReveal() {
   const { scrollYProgress } = useScroll({ target: outer, offset: ['start start', 'end end'] })
   const p = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.4 })
 
-  /* phases overlap so the screen is never sparse: network forms while
-     fragments are still converging, card rises while the network glows */
-  const netOpacity = useTransform(p, [0.22, 0.38], [0, 1])
-  const netScale = useTransform(p, [0.22, 0.45], [0.85, 1])
-  const netFade = useTransform(p, [0.52, 0.66], [1, 0.25])
-  const edgeDraw = useTransform(p, [0.26, 0.46], [0, 1])
-  const cardIn = useTransform(p, [0.52, 0.68], [0, 1])
-  const cardY = useTransform(p, [0.52, 0.68], [48, 0])
-  const introFade = useTransform(p, [0, 0.14, 0.3], [1, 1, 0])
+  /* phases overlap heavily so the screen is never sparse: the network starts
+     drawing while fragments are still mid-flight, the card rises while the
+     network is still glowing, and the ambient light is present from the very
+     start (not gated behind the network) so there's always visual weight
+     filling the frame instead of a mid-scroll trough. */
+  const ambientGlow = useTransform(p, [0, 0.18], [0.35, 1])
+  const netOpacity = useTransform(p, [0.14, 0.32], [0, 1])
+  const netScale = useTransform(p, [0.14, 0.4], [0.85, 1])
+  const netFade = useTransform(p, [0.56, 0.7], [1, 0.3])
+  const edgeDraw = useTransform(p, [0.18, 0.4], [0, 1])
+  const cardIn = useTransform(p, [0.5, 0.66], [0, 1])
+  const cardY = useTransform(p, [0.5, 0.66], [48, 0])
+  const introFade = useTransform(p, [0, 0.14, 0.28], [1, 1, 0])
   const netVisible = useTransform([netOpacity, netFade] as MotionValue<number>[], ([a, b]: number[]) => a * b)
 
   if (reduced) {
@@ -85,9 +93,9 @@ export function AIReveal() {
   return (
     <section ref={outer} className="relative" style={{ height: '180vh', background: color.surface, borderBottom: `1px solid ${color.border}` }}>
       <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center px-6">
-        {/* ambient AI light */}
+        {/* ambient AI light — present from the start, brightens as the network forms */}
         <motion.div aria-hidden className="absolute inset-0 pointer-events-none"
-          style={{ opacity: netOpacity, background: `radial-gradient(ellipse 45% 40% at 50% 50%, rgba(77,159,255,0.12), transparent 70%)` }} />
+          style={{ opacity: ambientGlow, background: `radial-gradient(ellipse 55% 50% at 50% 50%, rgba(77,159,255,0.14), transparent 70%)` }} />
 
         {/* intro line */}
         <motion.div className="absolute inset-x-6 top-[14vh] text-center" style={{ opacity: introFade }}>

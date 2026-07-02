@@ -123,7 +123,11 @@ export default function Landing() {
   const h2Style: CSSProperties = { ...BC, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 0.92, color: CREAM }
 
   return (
-    <div style={{ background: BASE, color: CREAM, overflowX: 'hidden' }}>
+    // overflowX must be 'clip', not 'hidden' — per spec, hidden on only one
+    // axis forces the other axis to compute as 'auto', silently turning this
+    // div into a scroll container and breaking every position:sticky
+    // descendant (the AI reveal pin) against the real viewport.
+    <div style={{ background: BASE, color: CREAM, overflowX: 'clip' }}>
 
       {/* Scroll progress — a hairline of accent along the top */}
       <motion.div className="fixed top-0 left-0 right-0 z-50 origin-left"
