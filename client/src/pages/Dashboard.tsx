@@ -202,8 +202,8 @@ export default function Dashboard() {
 
       {/* ── QUICK ACTIONS ───────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <ActionCard accent icon={<Plus className="h-4.5 w-4.5" size={18} />} title="Log Match"
-          sub="60 seconds, full record" onClick={() => navigate('/matches')} />
+        <ActionCard accent icon={<Plus className="h-4.5 w-4.5" size={18} />} title="New Match Entry"
+          sub="Under a minute, full record" onClick={() => navigate('/matches')} />
         <ActionCard ai icon={<Sparkles size={18} />} title="AI Analysis"
           sub="Ask the coach anything" onClick={() => navigate('/ai-coach')} />
         <ActionCard ai icon={<Dumbbell size={18} />} title="Training Plan"

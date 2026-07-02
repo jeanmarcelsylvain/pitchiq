@@ -38,6 +38,20 @@ export type Position =
   | 'CF'
   | 'ST'
 
+export interface MatchReflection {
+  confidence?: number       // 1-10
+  energy?: number           // 1-10
+  focus?: number            // 1-10
+  enjoyment?: number        // 1-10
+  fatigue?: number          // 1-10
+  mentalSharpness?: number  // 1-10
+  playedNaturalPosition?: boolean
+  completedObjective?: boolean
+  teamExecutedPlan?: boolean
+  aiFocusRequest?: string
+  takeaway?: string
+}
+
 export interface Match {
   id: string
   userId: string
@@ -62,6 +76,11 @@ export interface Match {
   rating: number
   notes?: string
   createdAt: string
+  /* Optional — captured by the Match Journal's Reflection step. Stored
+     alongside the match so future AI features (mood trends, fatigue
+     patterns, performance-under-pressure) can read it without a schema
+     migration. Never required, never fabricated if absent. */
+  reflection?: MatchReflection
 }
 
 export interface TrainingSession {

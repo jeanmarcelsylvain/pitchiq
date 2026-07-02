@@ -203,7 +203,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex-1" />
           <button onClick={() => navigate('/matches')}
             className="flex items-center gap-1.5 rounded-lg bg-pitch-600 hover:bg-pitch-500 px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95 shadow-glow-accent">
-            <Plus className="h-3.5 w-3.5" /> Log Match
+            <Plus className="h-3.5 w-3.5" /> New Entry
           </button>
           <button onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 transition-all">
