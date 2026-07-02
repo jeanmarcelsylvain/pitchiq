@@ -81,6 +81,21 @@ export interface Match {
      patterns, performance-under-pressure) can read it without a schema
      migration. Never required, never fabricated if absent. */
   reflection?: MatchReflection
+  /* Journal metadata — favorites, custom tags, and a media-ready slot for
+     photos/video/GPS/wearable imports and coach annotations. All optional
+     and additive so existing matches never need a migration. */
+  favorite?: boolean
+  favoriteReason?: 'best_match' | 'career_milestone' | 'scouted_match' | 'championship' | 'personal_record'
+  tags?: string[]
+  media?: MatchMedia
+}
+
+export interface MatchMedia {
+  photos?: string[]
+  videoUrl?: string
+  gpsTrackUrl?: string
+  wearableSource?: string
+  coachAnnotations?: { author: string; note: string; at: string }[]
 }
 
 export interface TrainingSession {
