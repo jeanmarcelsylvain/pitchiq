@@ -158,9 +158,43 @@ export function buildAISummary(matches: Match[], dna: DNAAttribute[], style: Pla
   }
 }
 
+/* ── Scout Mode match series — a compact, PII-free slice of each match used
+   to power client-side scorecards/trajectory/shortlist/position charts on
+   the public Scout Mode view. No id/userId/notes/reflection/tags/media —
+   just the performance numbers, gated behind the same seasonSummary and
+   performanceDNA toggles as the rest of the quantitative sections. ──────── */
+export interface ScoutMatch {
+  date: string
+  opponent: string
+  competition: string
+  venue: 'home' | 'away' | 'neutral'
+  result?: 'win' | 'loss' | 'draw'
+  position: string
+  minutesPlayed: number
+  goals: number
+  assists: number
+  shots: number
+  shotsOnTarget: number
+  passAccuracy: number
+  tackles: number
+  interceptions: number
+  distanceCovered: number
+  sprintSpeed: number
+  rating: number
+}
+
+function toScoutMatch(m: Match): ScoutMatch {
+  return {
+    date: m.date, opponent: m.opponent, competition: m.competition, venue: m.venue, result: m.result,
+    position: m.position, minutesPlayed: m.minutesPlayed, goals: m.goals, assists: m.assists,
+    shots: m.shots, shotsOnTarget: m.shotsOnTarget, passAccuracy: m.passAccuracy, tackles: m.tackles,
+    interceptions: m.interceptions, distanceCovered: m.distanceCovered, sprintSpeed: m.sprintSpeed, rating: m.rating,
+  }
+}
+
 /* ── Shareable payload — respects visibility settings, stays compact ────── */
 export interface SharePayload {
-  v: 3 // schema version
+  v: 4 // schema version
   audience?: ShareAudience
   name: string
   position: string
@@ -185,6 +219,8 @@ export interface SharePayload {
   highlights?: { label: string; value: string; opponent: string }[]
   contact?: ContactInfo
   moodTrend?: { confidence: number; energy: number }[]
+  matchSeries?: ScoutMatch[]
+  previousSeason?: { name: string; matches: number; avgRating: number; goals: number; assists: number }
   visibility: VisibilitySettings
 }
 
@@ -197,7 +233,8 @@ export function buildSharePayload(
   milestones: Milestone[],
   contact: ContactInfo,
   visibility: VisibilitySettings,
-  audience?: ShareAudience
+  audience?: ShareAudience,
+  previousSeason?: { name: string; matches: Match[] }
 ): SharePayload {
   const wins = matches.filter(m => m.result === 'win').length
   const totalGoals = matches.reduce((s, m) => s + m.goals, 0)
@@ -211,7 +248,7 @@ export function buildSharePayload(
     .sort((a, b) => a.date.localeCompare(b.date))
 
   return {
-    v: 3,
+    v: 4,
     audience,
     name: profile.name, position: profile.primaryPosition, secondaryPosition: profile.secondaryPosition,
     club: profile.club, graduationYear: profile.graduationYear,
@@ -237,6 +274,17 @@ export function buildSharePayload(
     contact: visibility.contact ? contact : undefined,
     moodTrend: visibility.reflections && reflected.length >= 2
       ? reflected.slice(-8).map(m => ({ confidence: m.reflection!.confidence!, energy: m.reflection!.energy! }))
+      : undefined,
+    matchSeries: visibility.seasonSummary && visibility.performanceDNA
+      ? [...matches].sort((a, b) => a.date.localeCompare(b.date)).slice(-30).map(toScoutMatch)
+      : undefined,
+    previousSeason: visibility.seasonSummary && previousSeason && previousSeason.matches.length
+      ? {
+          name: previousSeason.name, matches: previousSeason.matches.length,
+          avgRating: previousSeason.matches.reduce((s, m) => s + m.rating, 0) / previousSeason.matches.length,
+          goals: previousSeason.matches.reduce((s, m) => s + m.goals, 0),
+          assists: previousSeason.matches.reduce((s, m) => s + m.assists, 0),
+        }
       : undefined,
     visibility,
   }

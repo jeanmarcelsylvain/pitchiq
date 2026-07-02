@@ -44,7 +44,8 @@ interface RecruitExtras {
 export default function RecruitProfile() {
   const { profile } = useAppData()
   const { user, isDemoMode } = useAuth()
-  const { careerMatches } = useCareerMatches()
+  const { careerMatches, seasons } = useCareerMatches()
+  const previousSeason = seasons.find(s => !s.isCurrent)
   const uid = isDemoMode ? 'demo' : user?.uid ?? ''
 
   const [extras, setExtras] = useState<RecruitExtras>(() => {
@@ -93,7 +94,8 @@ export default function RecruitProfile() {
     const visibility = { ...extras.visibility, ...AUDIENCE_META[audience].visibility } as VisibilitySettings
     const payload = buildSharePayload(
       { ...profile, graduationYear: extras.graduationYear }, careerMatches, dna, style,
-      extras.story, extras.milestones, extras.contact, visibility, audience
+      extras.story, extras.milestones, extras.contact, visibility, audience,
+      previousSeason ? { name: previousSeason.name, matches: previousSeason.matches } : undefined
     )
     const encoded = encodePayload(payload)
     const link: ShareLink = {
@@ -242,6 +244,11 @@ export default function RecruitProfile() {
                         className="rounded-md p-1.5 transition-colors hover:bg-white/5" style={{ color: color.inkMuted }}>
                         <QrCode className="h-4 w-4" />
                       </button>
+                      <a href={url} target="_blank" rel="noopener noreferrer" aria-label="Preview Scout Mode"
+                        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold"
+                        style={{ ...BC, background: color.surface, color: color.inkDim, border: `1px solid ${color.border}` }}>
+                        <Eye className="h-3 w-3" /> Preview
+                      </a>
                       <button onClick={() => copyLink(link)} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold"
                         style={{ ...BC, background: color.surface, color: copiedId === link.id ? color.emerald : color.inkDim, border: `1px solid ${color.border}` }}>
                         {copiedId === link.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />} {copiedId === link.id ? 'Copied' : 'Copy'}
