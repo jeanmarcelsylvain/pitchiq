@@ -1,9 +1,19 @@
-import { useState } from 'react'
-import { Archive, Plus, ChevronDown, ChevronUp, Trophy, Target, Star, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Archive, ChevronDown, ChevronUp, Trophy, Star, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppData } from '@/hooks/useAppData'
 import { useApi } from '@/hooks/useApi'
+import { Widget, ProgressRing } from '@/components/widgets/Widget'
+import { Badge } from '@/components/ui/Badge'
+import { Counter } from '@/design/motion'
+import { color, font } from '@/design/tokens'
+import { buildDNA, buildPersonalRecords } from '@/lib/performanceIntel'
+import { DevelopmentTimeline } from '@/components/analytics/DevelopmentTimeline'
 import type { Match } from '@/types'
+
+const BC = { fontFamily: font.display }
+const B  = { fontFamily: font.ui }
+const sectionLabel = { ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: color.inkMuted } as const
 
 interface ArchivedSeason {
   id: string
@@ -86,12 +96,25 @@ export default function SeasonArchive() {
 
   const winRate = (s: ArchivedSeason) => s.matches.length > 0 ? Math.round((s.wins / s.matches.length) * 100) : 0
 
+  /* ── Career Development Engine — every match, across every season ──────── */
+  const careerMatches = useMemo(() => {
+    const archived = archive.flatMap(s => s.matches.map(m => ({ ...m, seasonName: s.name })))
+    const current = matches.map(m => ({ ...m, seasonName: 'Current Season' }))
+    return [...archived, ...current]
+  }, [archive, matches])
+
+  const careerDNA = useMemo(() => buildDNA(careerMatches), [careerMatches])
+  const careerRating = careerDNA.length ? Math.round(careerDNA.reduce((s, a) => s + a.value, 0) / careerDNA.length) : 0
+  const records = useMemo(() => buildPersonalRecords(careerMatches), [careerMatches])
+  const seasonCount = archive.length + (matches.length > 0 ? 1 : 0)
+
   return (
     <div className="space-y-6 animate-slide-up">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Season Archive</h1>
-          <p className="mt-1 text-sm text-slate-500">Archive completed seasons and track your progression over time</p>
+          <p style={sectionLabel} className="uppercase">Career Development</p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold text-white">Your complete journey.</h1>
+          <p className="mt-1 text-sm text-slate-500">{seasonCount} season{seasonCount === 1 ? '' : 's'} · {careerMatches.length} matches logged, career-wide</p>
         </div>
         {matches.length > 0 && (
           <button onClick={() => setShowArchiveForm(true)}
@@ -100,6 +123,53 @@ export default function SeasonArchive() {
           </button>
         )}
       </div>
+
+      {/* ── CAREER RATING ─────────────────────────────────────────────────── */}
+      {careerMatches.length > 0 && (
+        <div className="relative overflow-hidden rounded-2xl border border-slate-800/80 p-6 lg:p-8"
+          style={{ background: 'linear-gradient(135deg, rgba(23,28,56,0.9), rgba(10,13,28,0.95) 60%)' }}>
+          <div aria-hidden className="pointer-events-none absolute -top-24 right-10 h-64 w-64 rounded-full bg-pitch-600/10 blur-3xl" />
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p style={sectionLabel} className="uppercase mb-2">Career Rating</p>
+              <h2 className="font-display text-2xl font-extrabold text-white">Everything you've logged, in one score.</h2>
+              <p style={{ ...B, fontSize: '0.85rem', color: color.inkMuted }} className="mt-2 max-w-md">
+                Built the same way as your season Performance DNA, but pulled from every match across every archived season plus the current one.
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-2 justify-self-center lg:justify-self-end">
+              <ProgressRing value={careerRating} max={100} size={140} stroke={7}
+                label={<span className="font-display text-4xl font-extrabold text-white stat-number"><Counter to={careerRating} /></span>}
+                sub="career" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DEVELOPMENT TIMELINE ──────────────────────────────────────────── */}
+      {careerMatches.length > 0 && (
+        <Widget title="Development Timeline" badge={<Badge>{careerMatches.length} matches</Badge>}>
+          <div className="px-5 pb-5 pt-2">
+            <DevelopmentTimeline matches={careerMatches} />
+          </div>
+        </Widget>
+      )}
+
+      {/* ── PERSONAL RECORDS ──────────────────────────────────────────────── */}
+      {records.length > 0 && (
+        <Widget title="Personal Records" badge={<Trophy className="h-3.5 w-3.5 text-yellow-500/80" />}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-5 pb-5">
+            {records.map(r => (
+              <div key={r.label} className="relative overflow-hidden rounded-xl border border-slate-800/80 bg-gradient-to-b from-slate-800/40 to-slate-900/60 p-4">
+                <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-yellow-500/25 to-transparent" />
+                <p className="font-display text-2xl font-extrabold text-white stat-number leading-none">{r.value}</p>
+                <p className="mt-1.5 text-[11px] font-semibold text-slate-300">{r.label}</p>
+                <p className="text-[10px] text-slate-500">{r.sub}</p>
+              </div>
+            ))}
+          </div>
+        </Widget>
+      )}
 
       {/* Current Season Summary */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">

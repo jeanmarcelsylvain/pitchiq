@@ -312,3 +312,173 @@ export function detectPatterns(matches: Match[]): PatternInsight[] {
 
   return out.sort((a, b) => b.confidence - a.confidence)
 }
+
+/* ── Future Development — trend-projected estimates ───────────────────────── */
+
+export interface Projection {
+  key: DNAKey
+  label: string
+  current: number
+  projected: number
+  low: number
+  high: number
+  driver: string
+}
+
+export function projectDevelopment(dna: DNAAttribute[]): Projection[] {
+  return dna
+    .filter(a => a.matches >= 3)
+    .map(a => {
+      /* simple linear extrapolation off the recent trend, damped so a hot
+         streak doesn't imply infinite growth, with an uncertainty band that
+         widens on thinner samples */
+      const damped = a.trend * 0.6
+      const projected = clamp(a.value + damped)
+      const spread = clamp(18 - a.matches * 0.8, 6, 18)
+      return {
+        key: a.key,
+        label: a.label,
+        current: a.value,
+        projected,
+        low: clamp(projected - spread),
+        high: clamp(projected + spread),
+        driver: Math.abs(a.trend) < 0.5
+          ? 'Holding steady — no strong recent trend either way.'
+          : a.trend > 0
+            ? `Trending up ${a.trend.toFixed(1)} pts over your last 5 matches.`
+            : `Trending down ${Math.abs(a.trend).toFixed(1)} pts over your last 5 matches.`,
+      }
+    })
+}
+
+/* ── Consistency Engine ────────────────────────────────────────────────────── */
+
+export interface ConsistencyMetric {
+  label: string
+  score: number      // 0-100, higher = more consistent
+  spark: number[]
+  note: string
+}
+
+function rollingStd(values: number[], window: number): number[] {
+  return values.map((_, i) => {
+    const w = values.slice(Math.max(0, i - window + 1), i + 1)
+    return std(w)
+  })
+}
+
+export function buildConsistency(matches: Match[]): ConsistencyMetric[] {
+  const sorted = [...matches].sort((a, b) => a.date.localeCompare(b.date))
+  if (sorted.length < 3) return []
+
+  const series: { label: string; values: number[]; scaleMax: number; note: (v: number) => string }[] = [
+    { label: 'Rating Stability', values: sorted.map(m => m.rating), scaleMax: 2.2,
+      note: v => v >= 70 ? 'Your rating barely moves match to match — a dependable floor.' : 'Rating swings noticeably between matches.' },
+    { label: 'Passing Consistency', values: sorted.map(m => m.passAccuracy), scaleMax: 22,
+      note: v => v >= 70 ? 'Pass accuracy holds steady regardless of opponent or venue.' : 'Passing accuracy varies a fair amount match to match.' },
+    { label: 'Fitness Consistency', values: sorted.map(m => m.distanceCovered), scaleMax: 4.5,
+      note: v => v >= 70 ? 'Distance covered is stable — conditioning looks reliable.' : 'Distance covered fluctuates — fatigue or rotation may be a factor.' },
+    { label: 'Output Consistency', values: sorted.map(m => m.goals + m.assists), scaleMax: 2,
+      note: v => v >= 65 ? 'Goal involvement is repeatable, not streaky.' : 'Goals and assists cluster into hot and cold streaks.' },
+  ]
+
+  return series.map(s => {
+    const volatility = std(s.values)
+    const score = clamp(100 - (volatility / s.scaleMax) * 100)
+    const spark = rollingStd(s.values, 3).map(v => clamp(100 - (v / s.scaleMax) * 100))
+    return { label: s.label, score, spark, note: s.note(score) }
+  })
+}
+
+/* ── Improvement Momentum ─────────────────────────────────────────────────── */
+
+export interface Momentum {
+  state: 'accelerating' | 'plateau' | 'decline' | 'recovering'
+  label: string
+  description: string
+  spark: number[]
+}
+
+export function buildMomentum(matches: Match[]): Momentum | null {
+  const sorted = [...matches].sort((a, b) => a.date.localeCompare(b.date))
+  if (sorted.length < 5) return null
+
+  const spark = sorted.slice(-10).map(m => m.rating)
+  const half = Math.max(2, Math.floor(sorted.length / 2))
+  const firstHalf = sorted.slice(0, half).map(m => m.rating)
+  const secondHalf = sorted.slice(half).map(m => m.rating)
+  const recent3 = sorted.slice(-3).map(m => m.rating)
+  const priorAvg = avg(firstHalf)
+  const recentAvg = avg(secondHalf)
+  const veryRecentAvg = avg(recent3)
+  const overallDelta = recentAvg - priorAvg
+  const lastStepDelta = veryRecentAvg - recentAvg
+
+  if (overallDelta >= 0.35 && lastStepDelta >= 0) {
+    return {
+      state: 'accelerating', label: 'Improving Quickly',
+      description: `Your rating is up ${overallDelta.toFixed(1)} over the season and still climbing in your last 3 matches. Whatever changed, it's working.`,
+      spark,
+    }
+  }
+  if (overallDelta >= 0.35 && lastStepDelta < -0.3) {
+    return {
+      state: 'plateau', label: 'Recent Dip After a Strong Run',
+      description: `Season trend is up ${overallDelta.toFixed(1)}, but your last 3 matches cooled off ${Math.abs(lastStepDelta).toFixed(1)}. Likely a normal dip, not a reversal — worth a quick check on rest and role.`,
+      spark,
+    }
+  }
+  if (overallDelta <= -0.35 && lastStepDelta > 0.3) {
+    return {
+      state: 'recovering', label: 'Recovering',
+      description: `The season dipped ${Math.abs(overallDelta).toFixed(1)} overall, but your last 3 matches are climbing back ${lastStepDelta.toFixed(1)}. The trend has turned.`,
+      spark,
+    }
+  }
+  if (overallDelta <= -0.35) {
+    return {
+      state: 'decline', label: 'Temporary Decline',
+      description: `Rating is down ${Math.abs(overallDelta).toFixed(1)} over the season. Check the Consistency and Pattern Detection panels above for what's correlating with it.`,
+      spark,
+    }
+  }
+  return {
+    state: 'plateau', label: 'Holding Steady',
+    description: `Rating has moved less than half a point across the season (${overallDelta >= 0 ? '+' : ''}${overallDelta.toFixed(1)}) — a stable plateau. Small, targeted changes are the fastest way to break it.`,
+    spark,
+  }
+}
+
+/* ── Personal Records — across full career, not just current season ─────────── */
+
+export interface PersonalRecord {
+  label: string
+  value: string
+  sub: string
+}
+
+export function buildPersonalRecords(matches: Match[]): PersonalRecord[] {
+  if (matches.length === 0) return []
+  const byRating = [...matches].sort((a, b) => b.rating - a.rating)
+  const byAssists = [...matches].sort((a, b) => b.assists - a.assists)
+  const bySprint = [...matches].sort((a, b) => b.sprintSpeed - a.sprintSpeed)
+  const byPass = [...matches].sort((a, b) => b.passAccuracy - a.passAccuracy)
+  const byDistance = [...matches].sort((a, b) => b.distanceCovered - a.distanceCovered)
+
+  const sorted = [...matches].sort((a, b) => a.date.localeCompare(b.date))
+  let longest = 0, current = 0
+  const seasonAvg = avg(matches.map(m => m.rating))
+  sorted.forEach(m => {
+    if (m.rating >= seasonAvg) { current++; longest = Math.max(longest, current) } else current = 0
+  })
+
+  const records: PersonalRecord[] = [
+    { label: 'Highest Rating', value: byRating[0].rating.toFixed(1), sub: `vs ${byRating[0].opponent}` },
+    { label: 'Longest Streak', value: `${longest}`, sub: 'matches above average' },
+    { label: 'Most Assists', value: `${byAssists[0].assists}`, sub: `vs ${byAssists[0].opponent}` },
+    { label: 'Fastest Sprint', value: `${bySprint[0].sprintSpeed.toFixed(1)} km/h`, sub: `vs ${bySprint[0].opponent}` },
+    { label: 'Best Pass Accuracy', value: `${byPass[0].passAccuracy.toFixed(0)}%`, sub: `vs ${byPass[0].opponent}` },
+    { label: 'Greatest Distance', value: `${byDistance[0].distanceCovered.toFixed(1)} km`, sub: `vs ${byDistance[0].opponent}` },
+  ]
+  return records
+}

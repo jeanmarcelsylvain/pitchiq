@@ -9,19 +9,26 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { useNavigate } from 'react-router-dom'
-import { BarChart2, Plus, Dumbbell, ArrowUpRight } from 'lucide-react'
+import { BarChart2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Widget, ProgressRing } from '@/components/widgets/Widget'
 import { Counter } from '@/design/motion'
 import { color, font, ease } from '@/design/tokens'
 import { useAppData } from '@/hooks/useAppData'
-import { buildDNA, classifyStyle, detectPatterns, DNA_LABELS } from '@/lib/performanceIntel'
+import {
+  buildDNA, classifyStyle, detectPatterns,
+  projectDevelopment, buildConsistency, buildMomentum,
+} from '@/lib/performanceIntel'
 import { PerformanceDNA } from '@/components/analytics/PerformanceDNA'
 import { PlayingStyleCard } from '@/components/analytics/PlayingStyle'
 import { PositionPitch } from '@/components/analytics/PositionPitch'
 import { InsightCards } from '@/components/analytics/InsightCards'
 import { ShootingFunnel } from '@/components/analytics/ShootingFunnel'
+import { MatchReplayStudio } from '@/components/analytics/MatchReplayStudio'
+import { ConsistencyEngine } from '@/components/analytics/ConsistencyEngine'
+import { MomentumCard } from '@/components/analytics/MomentumCard'
+import { FutureDevelopment } from '@/components/analytics/FutureDevelopment'
 import { motion } from 'framer-motion'
 
 const BC   = { fontFamily: font.display }
@@ -58,6 +65,10 @@ export default function Analytics() {
   const dna = useMemo(() => buildDNA(matches), [matches])
   const style = useMemo(() => classifyStyle(matches, dna), [matches, dna])
   const patterns = useMemo(() => detectPatterns(matches), [matches])
+  const projections = useMemo(() => projectDevelopment(dna), [dna])
+  const consistencyMetrics = useMemo(() => buildConsistency(matches), [matches])
+  const momentum = useMemo(() => buildMomentum(matches), [matches])
+  const replayMatch = useMemo(() => [...matches].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null, [matches])
 
   const chartData = sorted.map(m => ({
     date: m.date.slice(5), rating: m.rating, goals: m.goals, assists: m.assists,
@@ -76,8 +87,6 @@ export default function Analytics() {
   const totalGoals = matches.reduce((s, m) => s + m.goals, 0)
   const totalTackles = matches.reduce((s, m) => s + m.tackles, 0)
   const totalInterceptions = matches.reduce((s, m) => s + m.interceptions, 0)
-
-  const weakestAttr = dna.length ? [...dna].sort((a, b) => a.value - b.value)[0] : null
 
   if (matches.length === 0) {
     return (
@@ -296,23 +305,38 @@ export default function Analytics() {
         </Widget>
       )}
 
-      {/* ── 9 · FUTURE DEVELOPMENT ───────────────────────────────────────── */}
-      {weakestAttr && (
-        <Widget title="Future Development">
-          <div className="px-5 pb-5 pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between rounded-lg border p-4"
-            style={{ borderColor: 'rgba(77,159,255,0.2)', background: 'rgba(77,159,255,0.05)' }}>
-            <div>
-              <p style={{ ...BC, fontSize: '0.62rem', letterSpacing: '0.14em', color: color.ai, fontWeight: 700 }} className="mb-1">
-                PRIMARY FOCUS AREA
-              </p>
-              <p style={{ ...BC, fontSize: '1.1rem', fontWeight: 700, color: color.ink }}>
-                {DNA_LABELS[weakestAttr.key]} — {weakestAttr.value.toFixed(0)}/100
-              </p>
-              <p style={{ ...B, fontSize: '0.82rem', color: color.inkDim }} className="mt-1 max-w-md">{weakestAttr.improve}</p>
-            </div>
-            <Button variant="ai" size="md" onClick={() => navigate('/training')}>
-              <Dumbbell className="h-4 w-4" /> Build training plan <ArrowUpRight className="h-3.5 w-3.5" />
-            </Button>
+      {/* ── 9 · IMPROVEMENT MOMENTUM ─────────────────────────────────────── */}
+      {momentum && (
+        <Widget title="Improvement Momentum">
+          <div className="px-5 pb-5 pt-2">
+            <MomentumCard momentum={momentum} />
+          </div>
+        </Widget>
+      )}
+
+      {/* ── 10 · CONSISTENCY ENGINE ──────────────────────────────────────── */}
+      {consistencyMetrics.length > 0 && (
+        <Widget title="Consistency Engine" badge={<Badge variant="outline">Volatility-based</Badge>}>
+          <div className="px-5 pb-5 pt-2">
+            <ConsistencyEngine metrics={consistencyMetrics} />
+          </div>
+        </Widget>
+      )}
+
+      {/* ── 11 · MATCH REPLAY STUDIO ─────────────────────────────────────── */}
+      {replayMatch && (
+        <Widget title="Match Replay Studio" badge={<Badge variant="info">vs {replayMatch.opponent}</Badge>}>
+          <div className="px-5 pb-5 pt-2">
+            <MatchReplayStudio match={replayMatch} />
+          </div>
+        </Widget>
+      )}
+
+      {/* ── 12 · FUTURE DEVELOPMENT ──────────────────────────────────────── */}
+      {projections.length > 0 && (
+        <Widget title="Future Development" to="/training" toLabel="Build training plan">
+          <div className="px-5 pb-5 pt-2">
+            <FutureDevelopment projections={projections} />
           </div>
         </Widget>
       )}

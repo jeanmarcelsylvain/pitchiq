@@ -122,11 +122,11 @@ export default function Landing() {
   const sectionLabel: CSSProperties = { ...BC, fontSize: '0.65rem', letterSpacing: '0.22em', color: MUTED }
   const h2Style: CSSProperties = { ...BC, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 0.92, color: CREAM }
 
+  /* overflowX must be 'clip', not 'hidden' — per spec, hidden on only one
+     axis forces the other axis to compute as 'auto', silently turning this
+     div into a scroll container and breaking every position:sticky
+     descendant (the AI reveal pin) against the real viewport. */
   return (
-    // overflowX must be 'clip', not 'hidden' — per spec, hidden on only one
-    // axis forces the other axis to compute as 'auto', silently turning this
-    // div into a scroll container and breaking every position:sticky
-    // descendant (the AI reveal pin) against the real viewport.
     <div style={{ background: BASE, color: CREAM, overflowX: 'clip' }}>
 
       {/* Scroll progress — a hairline of accent along the top */}
