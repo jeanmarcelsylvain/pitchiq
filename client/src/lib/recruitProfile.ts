@@ -22,19 +22,100 @@ export interface RecruitStory {
 }
 
 export interface VisibilitySettings {
+  personalInfo: boolean
+  contact: boolean
   story: boolean
   highlights: boolean
   seasonSummary: boolean
   aiSummary: boolean
+  performanceDNA: boolean
   matchHighlights: boolean
   trophyRoom: boolean
+  reflections: boolean
 }
 
 export const defaultVisibility: VisibilitySettings = {
-  story: true, highlights: true, seasonSummary: true, aiSummary: true, matchHighlights: true, trophyRoom: true,
+  personalInfo: true, contact: false, story: true, highlights: true, seasonSummary: true,
+  aiSummary: true, performanceDNA: true, matchHighlights: true, trophyRoom: true, reflections: false,
+}
+
+export const VISIBILITY_LABEL: Record<keyof VisibilitySettings, { label: string; hint: string }> = {
+  personalInfo: { label: 'Personal Information', hint: 'Age, height, weight, nationality' },
+  contact: { label: 'Contact Information', hint: 'Email, phone, social — off by default' },
+  story: { label: 'Player Story', hint: 'Your journey, goals, and ambitions' },
+  highlights: { label: 'Career Highlights', hint: 'Milestones like captaincy and championships' },
+  seasonSummary: { label: 'Season Summary', hint: 'Match count, rating, win rate' },
+  aiSummary: { label: 'AI Summary', hint: 'Strengths and development areas' },
+  performanceDNA: { label: 'Performance DNA', hint: 'The 7-attribute breakdown' },
+  matchHighlights: { label: 'Achievements & Records', hint: 'Best matches and personal records' },
+  trophyRoom: { label: 'Trophy Room', hint: 'Personal record highlights' },
+  reflections: { label: 'Reflections', hint: 'Mood and confidence trends — off by default' },
 }
 
 export const emptyStory: RecruitStory = { journey: '', currentGoals: '', developmentFocus: '', ambitions: '' }
+
+export interface ContactInfo {
+  email?: string
+  phone?: string
+  instagram?: string
+  twitter?: string
+  hudlUrl?: string
+  youtubeUrl?: string
+}
+
+export const emptyContact: ContactInfo = {}
+
+/* ── Share Links — one profile, multiple audience-tuned links ────────────── */
+export type ShareAudience = 'recruit' | 'coach' | 'parent' | 'public' | 'club'
+
+export const AUDIENCE_META: Record<ShareAudience, { label: string; description: string; visibility: Partial<VisibilitySettings> }> = {
+  recruit: { label: 'Recruit Link', description: 'For college coaches and recruiters — full performance picture', visibility: { ...defaultVisibility, contact: true } },
+  coach: { label: 'Coach Link', description: 'For your current or prospective coach — includes reflections', visibility: { ...defaultVisibility, reflections: true, contact: true } },
+  parent: { label: 'Parent Link', description: 'For family — everything visible, a full picture of progress', visibility: { ...defaultVisibility, reflections: true, contact: true } },
+  public: { label: 'Public Link', description: 'For social media and general sharing — stats and story only', visibility: { ...defaultVisibility, contact: false, reflections: false } },
+  club: { label: 'Future Club Link', description: 'For clubs you\'re trying out for — performance-focused', visibility: { ...defaultVisibility, contact: true } },
+}
+
+export interface ShareLink {
+  id: string
+  audience: ShareAudience
+  label: string
+  visibility: VisibilitySettings
+  createdAt: string
+  encoded: string
+  views: number
+  lastViewedAt?: string
+}
+
+/* ── Future architecture — types only, no UI beyond a "coming soon" state.
+   Defined now so the eventual features (coach feedback, video/photo
+   highlights) slot into the existing SharePayload/visibility system
+   without a schema migration. ──────────────────────────────────────────── */
+export interface CoachNote {
+  id: string
+  authorName: string
+  authorRole: 'current_coach' | 'former_coach' | 'club_director' | 'trainer'
+  visibility: 'private' | 'shared'
+  verified: boolean
+  comment: string
+  createdAt: string
+}
+
+export interface HighlightMedia {
+  id: string
+  type: 'video' | 'photo' | 'training_clip' | 'coach_clip' | 'interview'
+  url: string
+  caption?: string
+  addedAt: string
+}
+
+/* ── Trust legend — shown on every public profile ─────────────────────────── */
+export const TRUST_LEGEND = [
+  { key: 'verified', label: 'Verified Statistics', desc: 'Directly from logged matches', color: '#2dd4a0' },
+  { key: 'ai', label: 'AI Interpretation', desc: 'Patterns detected from the data above', color: '#4d9fff' },
+  { key: 'reflection', label: 'Player Reflections', desc: 'Self-reported after matches', color: '#ffba08' },
+  { key: 'projection', label: 'Future Projection', desc: 'Trend-based estimate, not a guarantee', color: '#ff5a3c' },
+] as const
 
 export const MILESTONE_CATEGORY_LABEL: Record<Milestone['category'], string> = {
   captain: 'Captain', championship: 'Championship', award: 'Award',
@@ -79,12 +160,14 @@ export function buildAISummary(matches: Match[], dna: DNAAttribute[], style: Pla
 
 /* ── Shareable payload — respects visibility settings, stays compact ────── */
 export interface SharePayload {
-  v: 2 // schema version
+  v: 3 // schema version
+  audience?: ShareAudience
   name: string
   position: string
   secondaryPosition?: string
   club: string
   graduationYear?: number
+  age?: number
   height?: number
   weight?: number
   foot?: string
@@ -100,6 +183,8 @@ export interface SharePayload {
   aiSummary?: AISummary
   records?: { label: string; value: string; sub: string }[]
   highlights?: { label: string; value: string; opponent: string }[]
+  contact?: ContactInfo
+  moodTrend?: { confidence: number; energy: number }[]
   visibility: VisibilitySettings
 }
 
@@ -110,7 +195,9 @@ export function buildSharePayload(
   style: PlayingStyle | null,
   story: RecruitStory,
   milestones: Milestone[],
-  visibility: VisibilitySettings
+  contact: ContactInfo,
+  visibility: VisibilitySettings,
+  audience?: ShareAudience
 ): SharePayload {
   const wins = matches.filter(m => m.result === 'win').length
   const totalGoals = matches.reduce((s, m) => s + m.goals, 0)
@@ -120,26 +207,37 @@ export function buildSharePayload(
   const avgSprintSpeed = matches.length ? +(matches.reduce((s, m) => s + m.sprintSpeed, 0) / matches.length).toFixed(1) : 0
   const overall = dna.length ? Math.round(dna.reduce((s, a) => s + a.value, 0) / dna.length) : 0
   const aiSummary = buildAISummary(matches, dna, style)
+  const reflected = matches.filter(m => m.reflection?.confidence !== undefined && m.reflection?.energy !== undefined)
+    .sort((a, b) => a.date.localeCompare(b.date))
 
   return {
-    v: 2,
+    v: 3,
+    audience,
     name: profile.name, position: profile.primaryPosition, secondaryPosition: profile.secondaryPosition,
     club: profile.club, graduationYear: profile.graduationYear,
-    height: profile.height, weight: profile.weight, foot: profile.dominantFoot, nationality: profile.nationality,
+    age: visibility.personalInfo ? profile.age : undefined,
+    height: visibility.personalInfo ? profile.height : undefined,
+    weight: visibility.personalInfo ? profile.weight : undefined,
+    foot: visibility.personalInfo ? profile.dominantFoot : undefined,
+    nationality: visibility.personalInfo ? profile.nationality : undefined,
     avatarUrl: profile.avatarUrl,
     overall,
-    dna: dna.map(a => ({ key: a.key, label: a.label, value: Math.round(a.value) })),
+    dna: visibility.performanceDNA ? dna.map(a => ({ key: a.key, label: a.label, value: Math.round(a.value) })) : [],
     playingIdentity: style?.label ?? 'Developing identity',
     identityConfidence: style?.confidence ?? 0,
-    stats: {
+    stats: visibility.seasonSummary ? {
       matches: matches.length, goals: totalGoals, assists: totalAssists, avgRating,
       avgPassAccuracy, avgSprintSpeed, winRate: matches.length ? Math.round((wins / matches.length) * 100) : 0,
-    },
+    } : { matches: matches.length, goals: 0, assists: 0, avgRating: 0, avgPassAccuracy: 0, avgSprintSpeed: 0, winRate: 0 },
     story: visibility.story ? story : undefined,
     milestones: visibility.highlights ? milestones : undefined,
     aiSummary: visibility.aiSummary ? aiSummary : undefined,
     records: visibility.matchHighlights ? buildPersonalRecords(matches).map(r => ({ label: r.label, value: r.value, sub: r.sub })) : undefined,
     highlights: visibility.matchHighlights ? buildTopHighlights(matches).map(h => ({ label: h.label, value: h.value, opponent: h.match.opponent })) : undefined,
+    contact: visibility.contact ? contact : undefined,
+    moodTrend: visibility.reflections && reflected.length >= 2
+      ? reflected.slice(-8).map(m => ({ confidence: m.reflection!.confidence!, energy: m.reflection!.energy! }))
+      : undefined,
     visibility,
   }
 }
@@ -158,4 +256,47 @@ export function encodePayload(payload: SharePayload): string {
 
 export function decodePayload(encoded: string): SharePayload | null {
   try { return JSON.parse(fromBase64Url(encoded)) as SharePayload } catch { return null }
+}
+
+/* ── Share Link management — stored per-athlete, one row per generated link ─
+   View counts are honestly scoped: they only count visits recorded in this
+   browser's localStorage (via recordView below), since there is no backend
+   endpoint wired up to aggregate views across devices. The UI labels this
+   clearly rather than presenting it as real cross-visitor analytics. */
+function linksKey(uid: string) { return `recruit_share_links_${uid}` }
+
+export function loadShareLinks(uid: string): ShareLink[] {
+  try { return JSON.parse(localStorage.getItem(linksKey(uid)) ?? '[]') } catch { return [] }
+}
+export function saveShareLinks(uid: string, links: ShareLink[]) {
+  localStorage.setItem(linksKey(uid), JSON.stringify(links))
+}
+
+/* view events recorded against a profile's encoded id, keyed globally (not
+   per-uid) since the viewer is on a different device/session than the
+   athlete — this only aggregates views that happen to occur in this same
+   browser (e.g. the athlete previewing their own link). */
+function viewKey(encodedId: string) { return `recruit_view_${encodedId.slice(0, 24)}` }
+
+export function recordView(encoded: string) {
+  try {
+    const key = viewKey(encoded)
+    const count = Number(localStorage.getItem(key) ?? '0') + 1
+    localStorage.setItem(key, String(count))
+    localStorage.setItem(`${key}_last`, new Date().toISOString())
+  } catch { /* ignore */ }
+}
+
+export function getViewStats(encoded: string): { views: number; lastViewedAt: string | null } {
+  try {
+    const key = viewKey(encoded)
+    return { views: Number(localStorage.getItem(key) ?? '0'), lastViewedAt: localStorage.getItem(`${key}_last`) }
+  } catch { return { views: 0, lastViewedAt: null } }
+}
+
+/* ── QR code — via a public QR image service; the payload is just the
+   already-public share URL, nothing sensitive crosses the wire beyond what
+   the athlete is already about to share. */
+export function qrCodeUrl(shareUrl: string, size = 240): string {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&color=244-241-234&bgcolor=10-13-28&data=${encodeURIComponent(shareUrl)}`
 }

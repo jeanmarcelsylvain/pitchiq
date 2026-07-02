@@ -162,3 +162,59 @@ html.light ::-webkit-scrollbar-thumb { background: #cfcfe0 !important; }
 html.light input[type='date']::-webkit-calendar-picker-indicator { filter: none !important; }
 html.light .sidebar-texture { background-image: repeating-linear-gradient(-55deg, transparent, transparent 18px, rgba(255,90,60,0.04) 18px, rgba(255,90,60,0.04) 19px) !important; }
 html.light .grain { opacity: 0.03; }
+
+/* ── Digital Recruiting Packet — print treatment ─────────────────────────
+   Turns the Recruit Profile page into a club-ready PDF via the browser's
+   native print dialog: cover title, running page numbers, section breaks,
+   no chrome (nav, buttons, share tools). */
+@media print {
+  @page {
+    size: letter;
+    margin: 0.6in 0.55in 0.7in 0.55in;
+    @bottom-center {
+      content: "PitchIQ Recruiting Packet — Page " counter(page) " of " counter(pages);
+      font-family: 'Inter', sans-serif;
+      font-size: 8pt;
+      color: #6a6690;
+    }
+  }
+
+  html, html.light { background: #ffffff !important; }
+  body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #14121f !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print\:hidden,
+  nav, aside, header button, .sidebar-texture { display: none !important; }
+
+  main, [class*='space-y-6'] { max-width: 100% !important; }
+
+  .rounded-2xl, .rounded-xl {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    border: 1px solid #d8d6e6 !important;
+  }
+
+  h1, h2, .font-display { color: #14121f !important; }
+  p, span, div { color-adjust: exact; }
+
+  /* Cover-page style masthead injected above the first section */
+  main::before {
+    content: "PITCHIQ — DIGITAL RECRUITING PACKET";
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    font-size: 10pt;
+    color: #b3401f;
+    border-bottom: 2px solid #b3401f;
+    padding-bottom: 8pt;
+    margin-bottom: 16pt;
+  }
+}

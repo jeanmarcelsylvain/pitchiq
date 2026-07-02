@@ -6,10 +6,9 @@
 import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sparkles, Trophy, Star, TrendingUp, ShieldCheck } from 'lucide-react'
+import { Sparkles, Trophy, Star, TrendingUp, ShieldCheck, Mail, Instagram, Twitter, Film } from 'lucide-react'
 import { color, font, ease } from '@/design/tokens'
-import { decodePayload } from '@/lib/recruitProfile'
-import { MILESTONE_CATEGORY_LABEL } from '@/lib/recruitProfile'
+import { decodePayload, recordView, MILESTONE_CATEGORY_LABEL, TRUST_LEGEND } from '@/lib/recruitProfile'
 
 const BC   = { fontFamily: font.display }
 const B    = { fontFamily: font.ui }
@@ -22,13 +21,14 @@ export default function ScoutView() {
   const data = encoded ? decodePayload(encoded) : null
 
   useEffect(() => {
-    if (data) {
+    if (data && encoded) {
       document.title = `${data.name} — ${data.position} · PitchIQ Recruit Profile`
       const meta = document.querySelector('meta[name="description"]')
       if (meta) meta.setAttribute('content', `${data.name}, ${data.position}${data.club ? ` at ${data.club}` : ''} — ${data.stats.matches} matches, ${data.stats.avgRating.toFixed(1)} average rating. View verified performance data on PitchIQ.`)
+      recordView(encoded)
     }
     return () => { document.title = 'PitchIQ — Know Your Game' }
-  }, [data])
+  }, [data, encoded])
 
   if (!data) {
     return (
@@ -184,6 +184,36 @@ export default function ScoutView() {
             </div>
           </Section>
         ) : null}
+
+        {/* ── CONTACT ────────────────────────────────────────────────────── */}
+        {data.contact && Object.values(data.contact).some(v => v) && (
+          <Section title="Contact" icon={Mail} iconColor={color.inkMuted}>
+            <div className="flex flex-wrap gap-3">
+              {data.contact.email && <a href={`mailto:${data.contact.email}`} className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.82rem', color: color.inkDim }}><Mail className="h-3.5 w-3.5" />{data.contact.email}</a>}
+              {data.contact.phone && <span style={{ ...B, fontSize: '0.82rem', color: color.inkDim }}>{data.contact.phone}</span>}
+              {data.contact.instagram && <span className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.82rem', color: color.inkDim }}><Instagram className="h-3.5 w-3.5" />{data.contact.instagram}</span>}
+              {data.contact.twitter && <span className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.82rem', color: color.inkDim }}><Twitter className="h-3.5 w-3.5" />{data.contact.twitter}</span>}
+              {data.contact.hudlUrl && <a href={data.contact.hudlUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.82rem', color: color.accentSoft }}><Film className="h-3.5 w-3.5" />Hudl</a>}
+              {data.contact.youtubeUrl && <a href={data.contact.youtubeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.82rem', color: color.accentSoft }}><Film className="h-3.5 w-3.5" />Video</a>}
+            </div>
+          </Section>
+        )}
+
+        {/* ── TRUST LEGEND ──────────────────────────────────────────────── */}
+        <div className="rounded-2xl p-5" style={{ background: 'rgba(37,43,77,0.2)', border: `1px solid ${color.border}` }}>
+          <p style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.14em', color: color.inkMuted }} className="uppercase mb-3">How to read this profile</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {TRUST_LEGEND.map(t => (
+              <div key={t.key} className="flex items-start gap-1.5">
+                <span aria-hidden className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: t.color }} />
+                <div>
+                  <p style={{ ...B, fontSize: '0.72rem', fontWeight: 600, color: color.inkDim }}>{t.label}</p>
+                  <p style={{ ...B, fontSize: '0.62rem', color: color.inkMuted }}>{t.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="flex items-center justify-center gap-1.5 pt-2 pb-8" style={{ ...B, fontSize: '0.7rem', color: color.inkMuted }}>
           <TrendingUp className="h-3 w-3" /> Powered by PitchIQ — verified performance data, logged match by match.

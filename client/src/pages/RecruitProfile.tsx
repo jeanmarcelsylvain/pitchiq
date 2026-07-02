@@ -1,11 +1,14 @@
 /* ═══ Recruit Profile OS ══════════════════════════════════════════════════
-   The editable, private side of the flagship public profile. Everything
-   here feeds the shareable ScoutView — hero, story, milestones, and
-   per-section visibility controls live here; the public page just renders
-   what's toggled on. */
+   The editable, private side of the flagship public profile. Hero, story,
+   milestones, contact info, and per-audience Share Links all live here —
+   the public ScoutView just renders whatever a given link's visibility
+   snapshot allows. */
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Copy, Check, Download, Plus, X, Eye, EyeOff, Trophy, Star, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Copy, Check, Download, Plus, X, Eye, EyeOff, Trophy, Star, Sparkles,
+  Link2, QrCode, Trash2, Mail, Instagram, Twitter, Film, MessageSquare, Image as ImageIcon,
+} from 'lucide-react'
 import { useAppData } from '@/hooks/useAppData'
 import { useAuth } from '@/hooks/useAuth'
 import { useCareerMatches } from '@/hooks/useCareerMatches'
@@ -13,12 +16,14 @@ import { color, font, ease } from '@/design/tokens'
 import { Counter } from '@/design/motion'
 import { ProgressRing } from '@/components/widgets/Widget'
 import { PerformanceDNA } from '@/components/analytics/PerformanceDNA'
+import { QRCode } from '@/components/recruit/QRCode'
 import { buildDNA, classifyStyle, buildPersonalRecords } from '@/lib/performanceIntel'
 import { buildHighlights } from '@/lib/matchIntel'
 import {
   buildAISummary, buildSharePayload, encodePayload,
-  defaultVisibility, emptyStory, MILESTONE_CATEGORY_LABEL,
-  type RecruitStory, type Milestone, type VisibilitySettings,
+  defaultVisibility, emptyStory, emptyContact, MILESTONE_CATEGORY_LABEL, VISIBILITY_LABEL, AUDIENCE_META,
+  loadShareLinks, saveShareLinks, getViewStats,
+  type RecruitStory, type Milestone, type VisibilitySettings, type ContactInfo, type ShareLink, type ShareAudience,
 } from '@/lib/recruitProfile'
 
 const BC   = { fontFamily: font.display }
@@ -32,6 +37,7 @@ interface RecruitExtras {
   graduationYear?: number
   story: RecruitStory
   milestones: Milestone[]
+  contact: ContactInfo
   visibility: VisibilitySettings
 }
 
@@ -44,18 +50,30 @@ export default function RecruitProfile() {
   const [extras, setExtras] = useState<RecruitExtras>(() => {
     try {
       const raw = localStorage.getItem(storageKey(uid))
-      if (raw) return JSON.parse(raw)
-    } catch { /* ignore */ }
-    return { story: emptyStory, milestones: [], visibility: defaultVisibility }
+      if (raw) {
+        const saved = JSON.parse(raw)
+        return {
+          story: { ...emptyStory, ...saved.story }, milestones: saved.milestones ?? [],
+          contact: { ...emptyContact, ...saved.contact }, visibility: { ...defaultVisibility, ...saved.visibility },
+          graduationYear: saved.graduationYear,
+        }
+      }
+    } catch { /* ignore corrupt state */ }
+    return { story: emptyStory, milestones: [], contact: emptyContact, visibility: defaultVisibility }
   })
-  const [copied, setCopied] = useState(false)
   const [editingStory, setEditingStory] = useState(false)
+  const [editingContact, setEditingContact] = useState(false)
   const [newMilestone, setNewMilestone] = useState({ title: '', category: 'performance' as Milestone['category'] })
+  const [links, setLinks] = useState<ShareLink[]>(() => loadShareLinks(uid))
+  const [creatingAudience, setCreatingAudience] = useState<ShareAudience | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [qrForId, setQrForId] = useState<string | null>(null)
 
   const persist = (next: RecruitExtras) => {
     setExtras(next)
     localStorage.setItem(storageKey(uid), JSON.stringify(next))
   }
+  const persistLinks = (next: ShareLink[]) => { setLinks(next); saveShareLinks(uid, next) }
 
   const dna = useMemo(() => buildDNA(careerMatches), [careerMatches])
   const style = useMemo(() => classifyStyle(careerMatches, dna), [careerMatches, dna])
@@ -71,17 +89,28 @@ export default function RecruitProfile() {
   const avgPassAcc = careerMatches.length ? Math.round(careerMatches.reduce((s, m) => s + m.passAccuracy, 0) / careerMatches.length) : 0
   const avgDistance = careerMatches.length ? (careerMatches.reduce((s, m) => s + m.distanceCovered, 0) / careerMatches.length).toFixed(1) : '0'
 
-  const handleShare = () => {
+  const generateLink = (audience: ShareAudience) => {
+    const visibility = { ...extras.visibility, ...AUDIENCE_META[audience].visibility } as VisibilitySettings
     const payload = buildSharePayload(
       { ...profile, graduationYear: extras.graduationYear }, careerMatches, dna, style,
-      extras.story, extras.milestones, extras.visibility
+      extras.story, extras.milestones, extras.contact, visibility, audience
     )
     const encoded = encodePayload(payload)
-    const url = `${window.location.origin}/scout/${encoded}`
-    navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
+    const link: ShareLink = {
+      id: crypto.randomUUID(), audience, label: AUDIENCE_META[audience].label,
+      visibility, createdAt: new Date().toISOString(), encoded, views: 0,
+    }
+    persistLinks([link, ...links.filter(l => l.audience !== audience)])
+    setCreatingAudience(null)
   }
+
+  const copyLink = (link: ShareLink) => {
+    const url = `${window.location.origin}/scout/${link.encoded}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(link.id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+  const deleteLink = (id: string) => persistLinks(links.filter(l => l.id !== id))
 
   const addMilestone = () => {
     if (!newMilestone.title.trim()) return
@@ -102,17 +131,10 @@ export default function RecruitProfile() {
           <h1 className="mt-1 font-display text-2xl font-extrabold text-white">Your public showcase.</h1>
           <p className="mt-1 text-sm text-slate-500">What a coach sees within 30 seconds — no login required.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handleShare}
-            className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:text-white transition-all">
-            {copied ? <Check className="h-4 w-4 text-pitch-400" /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Link copied!' : 'Copy share link'}
-          </button>
-          <button onClick={() => window.print()}
-            className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2 text-sm font-semibold text-white transition-all">
-            <Download className="h-4 w-4" /> Download PDF
-          </button>
-        </div>
+        <button onClick={() => window.print()}
+          className="flex items-center gap-2 rounded-xl bg-pitch-600 hover:bg-pitch-500 px-4 py-2 text-sm font-semibold text-white transition-all print:hidden">
+          <Download className="h-4 w-4" /> Export Recruiting Packet (PDF)
+        </button>
       </div>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
@@ -161,13 +183,115 @@ export default function RecruitProfile() {
         ))}
       </div>
 
+      {/* ── SHARE LINKS ──────────────────────────────────────────────────── */}
+      <div className="rounded-2xl p-6 print:hidden" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+        <div className="flex items-center gap-2 mb-1">
+          <Link2 className="h-4 w-4" style={{ color: color.accentSoft }} />
+          <p style={sectionLabel} className="uppercase">Share Links</p>
+        </div>
+        <p style={{ ...B, fontSize: '0.78rem', color: color.inkMuted }} className="mb-4">Each audience gets exactly what they need — nothing more.</p>
+
+        <div className="flex flex-wrap gap-2 mb-5">
+          {(Object.keys(AUDIENCE_META) as ShareAudience[]).map(a => {
+            const existing = links.find(l => l.audience === a)
+            return (
+              <button key={a} onClick={() => setCreatingAudience(a)}
+                className="rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                style={{ ...BC, background: existing ? 'rgba(45,212,160,0.08)' : color.bg, color: existing ? color.emerald : color.inkMuted, border: `1px solid ${existing ? 'rgba(45,212,160,0.3)' : color.border}` }}>
+                {AUDIENCE_META[a].label} {existing ? '✓' : ''}
+              </button>
+            )
+          })}
+        </div>
+
+        <AnimatePresence>
+          {creatingAudience && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+              className="mb-5 rounded-lg p-4 overflow-hidden" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
+              <p style={{ ...BC, fontSize: '0.9rem', fontWeight: 700, color: color.ink }}>{AUDIENCE_META[creatingAudience].label}</p>
+              <p style={{ ...B, fontSize: '0.78rem', color: color.inkMuted }} className="mt-1 mb-3">{AUDIENCE_META[creatingAudience].description}</p>
+              <div className="flex gap-2">
+                <button onClick={() => generateLink(creatingAudience)} className="rounded-lg px-3 py-1.5 text-xs font-bold" style={{ ...BC, background: color.accent, color: color.bg }}>
+                  Generate Link
+                </button>
+                <button onClick={() => setCreatingAudience(null)} style={{ ...B, fontSize: '0.78rem', color: color.inkMuted }}>Cancel</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {links.length === 0 ? (
+          <EmptySection text="Generate your first share link above — each one carries its own visibility settings." />
+        ) : (
+          <div className="space-y-2.5">
+            {links.map(link => {
+              const url = `${window.location.origin}/scout/${link.encoded}`
+              const stats = getViewStats(link.encoded)
+              return (
+                <div key={link.id} className="rounded-lg p-3.5" style={{ background: color.bg, border: `1px solid ${color.border}` }}>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
+                      <p style={{ ...BC, fontSize: '0.85rem', fontWeight: 700, color: color.ink }}>{link.label}</p>
+                      <p style={{ ...MONO, fontSize: '0.66rem', color: color.inkMuted }} className="truncate max-w-xs">{url}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span style={{ ...B, fontSize: '0.68rem', color: color.inkMuted }}>
+                        {stats.views} view{stats.views === 1 ? '' : 's'} <span className="opacity-60">(this device)</span>
+                      </span>
+                      <button onClick={() => setQrForId(qrForId === link.id ? null : link.id)} aria-label="Show QR code"
+                        className="rounded-md p-1.5 transition-colors hover:bg-white/5" style={{ color: color.inkMuted }}>
+                        <QrCode className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => copyLink(link)} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold"
+                        style={{ ...BC, background: color.surface, color: copiedId === link.id ? color.emerald : color.inkDim, border: `1px solid ${color.border}` }}>
+                        {copiedId === link.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />} {copiedId === link.id ? 'Copied' : 'Copy'}
+                      </button>
+                      <button onClick={() => deleteLink(link.id)} aria-label={`Delete ${link.label}`} className="rounded-md p-1.5 hover:text-white" style={{ color: color.inkMuted }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <AnimatePresence>
+                    {qrForId === link.id && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                        className="pt-4 mt-3 flex justify-center overflow-hidden" style={{ borderTop: `1px solid ${color.border}` }}>
+                        <QRCode url={url} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── DEFAULT VISIBILITY ───────────────────────────────────────────── */}
+      <div className="rounded-2xl p-6 print:hidden" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+        <p style={sectionLabel} className="uppercase mb-1">Default Visibility</p>
+        <p style={{ ...B, fontSize: '0.78rem', color: color.inkMuted }} className="mb-4">Applied to new share links unless the audience preset overrides it.</p>
+        <div className="grid sm:grid-cols-2 gap-2.5">
+          {(Object.keys(VISIBILITY_LABEL) as (keyof VisibilitySettings)[]).map(key => (
+            <button key={key} onClick={() => toggleVisibility(key)} aria-pressed={extras.visibility[key]}
+              className="flex items-center justify-between gap-3 rounded-lg p-3 text-left transition-colors"
+              style={{ background: color.bg, border: `1px solid ${color.border}` }}>
+              <div>
+                <p style={{ ...B, fontSize: '0.8rem', color: color.inkDim, fontWeight: 500 }}>{VISIBILITY_LABEL[key].label}</p>
+                <p style={{ ...B, fontSize: '0.65rem', color: color.inkMuted }}>{VISIBILITY_LABEL[key].hint}</p>
+              </div>
+              {extras.visibility[key] ? <Eye className="h-4 w-4 shrink-0" style={{ color: color.emerald }} /> : <EyeOff className="h-4 w-4 shrink-0" style={{ color: color.inkMuted }} />}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ── PERFORMANCE DNA + AI SUMMARY ─────────────────────────────────── */}
       <div className="grid lg:grid-cols-[1.3fr_1fr] gap-5">
         <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
           <p style={sectionLabel} className="uppercase mb-4">Performance DNA</p>
           {dna.length > 0 ? <PerformanceDNA attributes={dna} /> : <EmptySection text="Log matches to build a Performance DNA profile." />}
         </div>
-        <VisibilityCard title="AI Scouting Summary" enabled={extras.visibility.aiSummary} onToggle={() => toggleVisibility('aiSummary')}>
+        <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="h-4 w-4" style={{ color: color.ai }} />
             <p style={{ ...BC, fontSize: '1rem', fontWeight: 700, color: color.ink }}>{aiSummary.playingIdentity}</p>
@@ -181,11 +305,12 @@ export default function RecruitProfile() {
           </div>
           <p style={{ ...BC, fontSize: '0.6rem', letterSpacing: '0.1em', color: color.inkMuted }} className="uppercase mb-1">Development Focus</p>
           <p style={{ ...B, fontSize: '0.78rem', color: color.inkDim, lineHeight: 1.5 }}>{aiSummary.futureFocus}</p>
-        </VisibilityCard>
+        </div>
       </div>
 
       {/* ── PLAYER STORY ──────────────────────────────────────────────────── */}
-      <VisibilityCard title="Player Story" enabled={extras.visibility.story} onToggle={() => toggleVisibility('story')}>
+      <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+        <p style={sectionLabel} className="uppercase mb-4">Player Story</p>
         {editingStory ? (
           <div className="space-y-3">
             {(['journey', 'currentGoals', 'developmentFocus', 'ambitions'] as const).map(field => (
@@ -209,14 +334,49 @@ export default function RecruitProfile() {
                 {extras.story.ambitions && <p style={{ ...B, fontSize: '0.82rem', color: color.inkMuted, lineHeight: 1.6 }}><strong style={{ color: color.inkDim }}>Ambitions: </strong>{extras.story.ambitions}</p>}
               </div>
             ) : <p style={{ ...B, fontSize: '0.82rem', color: color.inkMuted }}>Add your story so recruiters understand who you are, not just your stats.</p>}
-            <button onClick={() => setEditingStory(true)} className="mt-3 text-xs font-semibold" style={{ ...BC, color: color.accentSoft }}>Edit Story</button>
+            <button onClick={() => setEditingStory(true)} className="mt-3 text-xs font-semibold print:hidden" style={{ ...BC, color: color.accentSoft }}>Edit Story</button>
           </div>
         )}
-      </VisibilityCard>
+      </div>
+
+      {/* ── CONTACT INFO ──────────────────────────────────────────────────── */}
+      <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+        <div className="flex items-center gap-2 mb-4">
+          <Mail className="h-4 w-4" style={{ color: color.inkMuted }} />
+          <p style={sectionLabel} className="uppercase">Contact Information</p>
+          <span style={{ ...B, fontSize: '0.65rem', color: color.inkMuted }} className="ml-1">— off by default, enable per share link</span>
+        </div>
+        {editingContact ? (
+          <div className="grid sm:grid-cols-2 gap-3">
+            {([['email', 'Email'], ['phone', 'Phone (optional)'], ['instagram', 'Instagram'], ['twitter', 'Twitter/X'], ['hudlUrl', 'Hudl Profile'], ['youtubeUrl', 'YouTube / Video']] as const).map(([key, label]) => (
+              <div key={key}>
+                <label style={{ ...B, fontSize: '0.7rem', color: color.inkMuted }} className="block mb-1">{label}</label>
+                <input value={extras.contact[key] ?? ''} onChange={e => setExtras(prev => ({ ...prev, contact: { ...prev.contact, [key]: e.target.value } }))}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={{ ...B, color: color.ink, background: color.bg, border: `1px solid ${color.border}` }} />
+              </div>
+            ))}
+            <button onClick={() => { persist(extras); setEditingContact(false) }}
+              className="sm:col-span-2 rounded-lg px-3 py-1.5 text-xs font-bold w-fit" style={{ ...BC, background: color.accent, color: color.bg }}>Save Contact Info</button>
+          </div>
+        ) : (
+          <div>
+            {Object.values(extras.contact).some(v => v) ? (
+              <div className="flex flex-wrap gap-3">
+                {extras.contact.email && <span className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.8rem', color: color.inkDim }}><Mail className="h-3.5 w-3.5" />{extras.contact.email}</span>}
+                {extras.contact.instagram && <span className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.8rem', color: color.inkDim }}><Instagram className="h-3.5 w-3.5" />{extras.contact.instagram}</span>}
+                {extras.contact.twitter && <span className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.8rem', color: color.inkDim }}><Twitter className="h-3.5 w-3.5" />{extras.contact.twitter}</span>}
+                {extras.contact.youtubeUrl && <span className="flex items-center gap-1.5" style={{ ...B, fontSize: '0.8rem', color: color.inkDim }}><Film className="h-3.5 w-3.5" />Video linked</span>}
+              </div>
+            ) : <p style={{ ...B, fontSize: '0.82rem', color: color.inkMuted }}>Add contact info so serious recruiters can reach you.</p>}
+            <button onClick={() => setEditingContact(true)} className="mt-3 text-xs font-semibold print:hidden" style={{ ...BC, color: color.accentSoft }}>Edit Contact Info</button>
+          </div>
+        )}
+      </div>
 
       {/* ── HIGHLIGHTS TIMELINE ──────────────────────────────────────────── */}
-      <VisibilityCard title="Career Highlights" enabled={extras.visibility.highlights} onToggle={() => toggleVisibility('highlights')}>
-        <div className="flex flex-wrap gap-2 mb-4">
+      <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+        <p style={sectionLabel} className="uppercase mb-4">Career Highlights</p>
+        <div className="flex flex-wrap gap-2 mb-4 print:hidden">
           <input value={newMilestone.title} onChange={e => setNewMilestone(p => ({ ...p, title: e.target.value }))}
             placeholder="e.g. Team Captain, State Champion" onKeyDown={e => e.key === 'Enter' && addMilestone()}
             className="flex-1 min-w-[200px] rounded-lg px-3 py-2 text-sm outline-none"
@@ -238,16 +398,17 @@ export default function RecruitProfile() {
                     <p style={{ ...B, fontSize: '0.65rem', color: color.inkMuted }}>{MILESTONE_CATEGORY_LABEL[m.category]} · {m.date}</p>
                   </div>
                 </div>
-                <button onClick={() => removeMilestone(m.id)} aria-label={`Remove ${m.title}`} style={{ color: color.inkMuted }} className="hover:text-white"><X className="h-4 w-4" /></button>
+                <button onClick={() => removeMilestone(m.id)} aria-label={`Remove ${m.title}`} style={{ color: color.inkMuted }} className="hover:text-white print:hidden"><X className="h-4 w-4" /></button>
               </div>
             ))}
           </div>
         )}
-      </VisibilityCard>
+      </div>
 
       {/* ── MATCH HIGHLIGHTS + TROPHY ROOM ───────────────────────────────── */}
       <div className="grid lg:grid-cols-2 gap-5">
-        <VisibilityCard title="Match Highlights" enabled={extras.visibility.matchHighlights} onToggle={() => toggleVisibility('matchHighlights')}>
+        <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+          <p style={sectionLabel} className="uppercase mb-4">Match Highlights</p>
           {highlights.length === 0 ? <EmptySection text="Log more matches to surface highlights." /> : (
             <div className="grid grid-cols-2 gap-2.5">
               {highlights.map(h => (
@@ -259,8 +420,9 @@ export default function RecruitProfile() {
               ))}
             </div>
           )}
-        </VisibilityCard>
-        <VisibilityCard title="Trophy Room Preview" enabled={extras.visibility.trophyRoom} onToggle={() => toggleVisibility('trophyRoom')}>
+        </div>
+        <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}` }}>
+          <p style={sectionLabel} className="uppercase mb-4">Trophy Room Preview</p>
           {records.length === 0 ? <EmptySection text="Personal records will appear here." /> : (
             <div className="grid grid-cols-3 gap-2.5">
               {records.slice(0, 3).map(r => (
@@ -272,24 +434,27 @@ export default function RecruitProfile() {
               ))}
             </div>
           )}
-        </VisibilityCard>
+        </div>
+      </div>
+
+      {/* ── COMING SOON — architecture ready, not fully built ────────────── */}
+      <div className="grid lg:grid-cols-2 gap-5 print:hidden">
+        <ComingSoon icon={MessageSquare} title="Coach Notes" text="Private and shared coach comments, club evaluations, and verification — architecture is in place, coming in a future update." />
+        <ComingSoon icon={ImageIcon} title="Highlight Media" text="Highlight videos, photos, training clips, and interviews. The data model is ready; uploads are coming soon." />
       </div>
     </div>
   )
 }
 
-function VisibilityCard({ title, enabled, onToggle, children }: { title: string; enabled: boolean; onToggle: () => void; children: React.ReactNode }) {
+function ComingSoon({ icon: Icon, title, text }: { icon: typeof MessageSquare; title: string; text: string }) {
   return (
-    <div className="rounded-2xl p-6" style={{ background: color.surface, border: `1px solid ${color.border}`, opacity: enabled ? 1 : 0.6 }}>
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-2xl p-6" style={{ background: 'rgba(37,43,77,0.25)', border: `1px dashed ${color.border}` }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className="h-4 w-4" style={{ color: color.inkMuted }} />
         <p style={sectionLabel} className="uppercase">{title}</p>
-        <button onClick={onToggle} aria-pressed={enabled}
-          className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
-          style={{ ...BC, background: enabled ? 'rgba(45,212,160,0.1)' : 'rgba(154,151,184,0.1)', color: enabled ? color.emerald : color.inkMuted, border: `1px solid ${enabled ? 'rgba(45,212,160,0.3)' : color.border}` }}>
-          {enabled ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />} {enabled ? 'Public' : 'Hidden'}
-        </button>
+        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ ...BC, background: 'rgba(154,151,184,0.12)', color: color.inkMuted }}>COMING SOON</span>
       </div>
-      {children}
+      <p style={{ ...B, fontSize: '0.78rem', color: color.inkMuted, lineHeight: 1.5 }}>{text}</p>
     </div>
   )
 }
