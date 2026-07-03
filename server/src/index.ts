@@ -5,7 +5,6 @@ import compression from 'compression'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
-import { scheduleTrackerSync } from './services/trackers/scheduler'
 
 import matchRoutes from './routes/matches'
 import goalRoutes from './routes/goals'
@@ -19,7 +18,6 @@ import injuriesDbRoutes from './routes/injuries_db'
 import scheduledMatchesRoutes from './routes/scheduled_matches'
 import seasonsRoutes from './routes/seasons'
 import trainingPlansRoutes from './routes/training_plans'
-import trackerRoutes from './routes/trackers'
 
 dotenv.config()
 
@@ -72,7 +70,6 @@ app.use('/api/injuries-db', injuriesDbRoutes)
 app.use('/api/scheduled-matches', scheduledMatchesRoutes)
 app.use('/api/seasons', seasonsRoutes)
 app.use('/api/training-plans', trainingPlansRoutes)
-app.use('/api/trackers', trackerRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' })
@@ -85,8 +82,6 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 app.listen(PORT, () => {
   console.log(`PitchIQ API running on port ${PORT}`)
-  // Start background scheduler for tracker syncs
-  scheduleTrackerSync()
 })
 
 export default app
