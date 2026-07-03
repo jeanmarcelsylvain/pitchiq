@@ -24,8 +24,15 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
 
   const token = authHeader.slice(7)
 
-  // If Firebase Admin isn't initialized, extract uid from token payload directly
+  // If Firebase Admin isn't initialized, we cannot verify token signatures.
+  // Fail CLOSED in production — an unverified decode would let anyone forge a
+  // token with an arbitrary user_id and impersonate any user. The unverified
+  // path is allowed only in local development for testing without credentials.
   if (!admin.apps.length) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('FIREBASE_* env vars missing in production — rejecting all authenticated requests')
+      return res.status(503).json({ error: 'Authentication service unavailable' })
+    }
     try {
       const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
       req.userId = payload.user_id ?? payload.sub

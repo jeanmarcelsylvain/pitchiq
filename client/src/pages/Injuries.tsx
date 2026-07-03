@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Activity, Plus, ChevronRight, AlertTriangle, CheckCircle, Clock, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useApi } from '@/hooks/useApi'
+import { auth } from '@/lib/firebase'
 
 const RAILWAY_URL = 'https://pitchiq-production-facc.up.railway.app'
 
@@ -112,9 +113,13 @@ export default function Injuries() {
     setMessages(prev => [...prev, { id: aiId, role: 'ai', content: '' }])
 
     try {
+      const token = await auth.currentUser?.getIdToken()
       const res = await fetch(`${RAILWAY_URL}/api/injury/assess`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           message: userMsg,
           history: currentConversation,

@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express'
 import Anthropic from '@anthropic-ai/sdk'
+import { requireAuth } from '../middleware/auth'
 
 const router = Router()
+// Spends Anthropic API credits — never expose unauthenticated
+router.use(requireAuth)
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 router.post('/generate', async (req: Request, res: Response) => {

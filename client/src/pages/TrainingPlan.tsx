@@ -3,6 +3,7 @@ import { Dumbbell, Sparkles, RefreshCw, Calendar, Clock, ChevronDown, ChevronUp,
 import { useAuth } from '@/hooks/useAuth'
 import { useAppData } from '@/hooks/useAppData'
 import { useApi } from '@/hooks/useApi'
+import { auth } from '@/lib/firebase'
 
 const RAILWAY_URL = 'https://pitchiq-production-facc.up.railway.app'
 
@@ -163,9 +164,13 @@ export default function TrainingPlan() {
     setSavedPlan(null)
 
     try {
+      const token = await auth.currentUser?.getIdToken()
       const res = await fetch(`${RAILWAY_URL}/api/training/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           position: profile?.primaryPosition ?? 'CM',
           daysPerWeek,
