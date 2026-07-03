@@ -3,14 +3,17 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { Layout } from '@/components/Layout'
 import { Loader } from '@/components/Loader'
 import ProGate from '@/components/ProGate'
-import Landing from '@/pages/Landing'
+import NotFound from '@/pages/NotFound'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import TutorialOverlay, { TOUR_KEY } from '@/components/TutorialOverlay'
 import { Ambient } from '@/design/Ambient'
 import { useState, lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 
-/* Authenticated pages are code-split — the landing page never ships them
-   (or their chart library). Each loads on first navigation. */
+/* Every route is code-split, including Landing — a signed-in user's first
+   load never pays for the marketing page, and a first-time visitor never
+   pays for the dashboard/chart libraries. Each loads on first navigation. */
+const Landing         = lazy(() => import('@/pages/Landing'))
 const Onboarding      = lazy(() => import('@/pages/Onboarding'))
 const Dashboard       = lazy(() => import('@/pages/Dashboard'))
 const Matches         = lazy(() => import('@/pages/Matches'))
@@ -101,7 +104,7 @@ function AppRoutes() {
       <Route path="/subscribe/success" element={<SubscribeSuccess />} />
       <Route path="/scout/:encoded"    element={<ScoutView />} />
       <Route path="/watch/:encoded"    element={<VideoWatch />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>
   )
@@ -109,11 +112,13 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Ambient />
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <Ambient />
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
