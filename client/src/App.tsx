@@ -22,6 +22,8 @@ const Achievements    = lazy(() => import('@/pages/Achievements'))
 const RecruitProfile  = lazy(() => import('@/pages/RecruitProfile'))
 const Highlights      = lazy(() => import('@/pages/Highlights'))
 const ScoutView       = lazy(() => import('@/pages/ScoutView'))
+const VideoStudio     = lazy(() => import('@/pages/VideoStudio'))
+const VideoWatch      = lazy(() => import('@/pages/VideoWatch'))
 const Injuries        = lazy(() => import('@/pages/Injuries'))
 const MatchCalendar   = lazy(() => import('@/pages/MatchCalendar'))
 const SeasonArchive   = lazy(() => import('@/pages/SeasonArchive'))
@@ -93,10 +95,12 @@ function AppRoutes() {
       <Route path="/training"  element={<ProtectedRoute><ProGate feature="Training Plan Generator"><TrainingPlan /></ProGate></ProtectedRoute>} />
       <Route path="/injuries"  element={<ProtectedRoute><ProGate feature="Injury Tracker"><Injuries /></ProGate></ProtectedRoute>} />
       <Route path="/recruit"   element={<ProtectedRoute><ProGate feature="Recruitment Profile"><RecruitProfile /></ProGate></ProtectedRoute>} />
+      <Route path="/video"     element={<ProtectedRoute><ProGate feature="Video Analysis Studio"><VideoStudio /></ProGate></ProtectedRoute>} />
 
       {/* Public */}
       <Route path="/subscribe/success" element={<SubscribeSuccess />} />
       <Route path="/scout/:encoded"    element={<ScoutView />} />
+      <Route path="/watch/:encoded"    element={<VideoWatch />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>

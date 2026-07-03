@@ -4,7 +4,7 @@ import {
   Home, Activity, BookOpen, Target, Settings, Plus,
   LogOut, Menu, X, ChevronRight, Bell, Sparkles,
   Trophy, FileText, Film, HeartPulse, Calendar, TrendingUp,
-  Dumbbell, Sun, Moon,
+  Dumbbell, Sun, Moon, Clapperboard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -34,6 +34,7 @@ const navGroups = [
     label: 'Performance Lab',
     items: [
       { to: '/ai-coach',  icon: Sparkles,   label: 'Performance Lab', highlight: true },
+      { to: '/video',     icon: Clapperboard, label: 'Video Studio', highlight: true },
       { to: '/training',  icon: Dumbbell,   label: 'Training Plans', highlight: true },
       { to: '/injuries',  icon: HeartPulse, label: 'Recovery' },
     ],
